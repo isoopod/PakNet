@@ -1,0 +1,8 @@
+[package]
+name = "isopood/paknet"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[dependencies]
+pack = "isoopod/pack@0.1.0"
