@@ -5,7 +5,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 -- Modules
-local SHA2 = require(script.SHA2)
+local MountNamespace = require(script.MountNamespace)
 local types = require(script.types)
 
 local SALT = game.JobId
@@ -33,42 +33,7 @@ local PakNet = {}
     :::
 ]=]
 function PakNet.mount(file: Instance, RemoteTable: types.RemoteTable)
-	for name, settings in RemoteTable do
-		local f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteEvent?
-
-		-- Create the needed instnaces for this Remote
-		-- See the SHA2 module for why we use SHA224 for the identifier
-		if string.find(settings.remoteType, "f") then
-			if SHOULD_SEARCH then
-				f = file:WaitForChild(SHA2.hash224(`{name}{SALT}f`)) :: any
-			else
-				f = Instance.new("RemoteFunction")
-				f.Name = SHA2.hash224(`{name}{SALT}f`)
-				f.Archivable = false -- For saving places
-				f.Parent = file
-			end
-		end
-		if string.find(settings.remoteType, "r") then
-			if SHOULD_SEARCH then
-				r = file:WaitForChild(SHA2.hash224(`{name}{SALT}r`)) :: any
-			else
-				r = Instance.new("RemoteEvent")
-				r.Name = SHA2.hash224(`{name}{SALT}r`)
-				r.Archivable = false -- For saving places
-				r.Parent = file
-			end
-		end
-		if string.find(settings.remoteType, "u") then
-			if SHOULD_SEARCH then
-				u = file:WaitForChild(SHA2.hash224(`{name}{SALT}u`)) :: any
-			else
-				u = Instance.new("UnreliableRemoteEvent")
-				u.Name = SHA2.hash224(`{name}{SALT}u`)
-				u.Archivable = false -- For saving places
-				u.Parent = file
-			end
-		end
-	end
+	local eventTable = MountNamespace(file, SALT, RemoteTable)
 end
 
 -- Search for any remote definitions (in ReplicatedStorage/Remotes) and preload them
