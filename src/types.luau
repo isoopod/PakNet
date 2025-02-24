@@ -72,7 +72,14 @@ export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteE
 
 export type Server<T, V, U..., W...> = {
 	Fire: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, T, U...) -> (),
+	FireAll: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, T, U...) -> (),
+	FireList: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, players: { Player }, T, U...) -> (),
+	FireExcept: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, except: { Player }, T, U...) -> (),
+
 	FireUnreliable: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, T, U...) -> (),
+	FireAllUnreliable: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, T, U...) -> (),
+	FireListUnreliable: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, players: { Player }, T, U...) -> (),
+	FireExceptUnreliable: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, except: { Player }, T, U...) -> (),
 }
 
 return nil

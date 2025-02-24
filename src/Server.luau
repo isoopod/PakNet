@@ -1,8 +1,10 @@
 --!strict
 --!optimize 2
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Modules
+local Dash = require(ReplicatedStorage.Packages.dash)
 local types = require(script.Parent.types)
 
 local Server = {}
@@ -29,6 +31,18 @@ function Server.FireAll<T, V, U..., W...>(self: _Server<T, V, U..., W...>, v1: T
 	end
 end
 
+function Server.FireList<T, V, U..., W...>(self: _Server<T, V, U..., W...>, players: { Player }, v1: T, ...: U...)
+	for _, v in players do
+		self:Fire(v, v1, ...)
+	end
+end
+
+function Server.FireExcept<T, V, U..., W...>(self: _Server<T, V, U..., W...>, except: { Player }, v1: T, ...: U...)
+	for _, v in Players:GetPlayers() do
+		if not table.find(v, except) then self:Fire(v, v1, ...) end
+	end
+end
+
 function Server.FireUnreliable<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, v1: T, ...: U...)
 	assert(self._events.u, "[PAKNET]: To use 'FireUnreliable' you must have 'u' in the remoteType.")
 
@@ -41,6 +55,18 @@ end
 function Server.FireAllUnreliable<T, V, U..., W...>(self: _Server<T, V, U..., W...>, v1: T, ...: U...)
 	for _, v in Players:GetPlayers() do
 		self:FireUnreliable(v, v1, ...)
+	end
+end
+
+function Server.FireListUnreliable<T, V, U..., W...>(self: _Server<T, V, U..., W...>, players: { Player }, v1: T, ...: U...)
+	for _, v in players do
+		self:FireUnreliable(v, v1, ...)
+	end
+end
+
+function Server.FireExceptUnreliable<T, V, U..., W...>(self: _Server<T, V, U..., W...>, except: { Player }, v1: T, ...: U...)
+	for _, v in Players:GetPlayers() do
+		if not table.find(v, except) then self:FireUnreliable(v, v1, ...) end
 	end
 end
 
