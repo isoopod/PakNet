@@ -1,4 +1,6 @@
-local Pack = require(script.Parent.Parent:WaitForChild("pack"))
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Pack = require(ReplicatedStorage.Packages.pack)
 export type ManualTuple<T, U...> = Pack.ManualTuple<T, U...>
 
 --[=[

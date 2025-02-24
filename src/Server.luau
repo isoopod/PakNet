@@ -4,7 +4,6 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Modules
-local Dash = require(ReplicatedStorage.Packages.dash)
 local types = require(script.Parent.types)
 
 local Server = {}
