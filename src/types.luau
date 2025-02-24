@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local LemonSignal = require(ReplicatedStorage.Packages.lemonsignal)
 local Pack = require(ReplicatedStorage.Packages.pack)
 export type ManualTuple<T, U...> = Pack.ManualTuple<T, U...>
 
@@ -73,6 +74,9 @@ export type RemoteTable = {
 export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteEvent? }
 
 export type Server<T, V, U..., W...> = {
+	onEvent: LemonSignal.Signal<Player, T, U...>,
+	onInvoke: ((player: Player, T, U...) -> (V, W...))?,
+
 	Fire: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, T, U...) -> (),
 	FireAll: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, T, U...) -> (),
 	FireList: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, players: { Player }, T, U...) -> (),
