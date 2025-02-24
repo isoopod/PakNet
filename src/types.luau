@@ -56,9 +56,9 @@ export type RateLimitSetting = {
     Using these tuples can be helpful and allows you to structure your data closer to how you can in regular remote events, without any overhead.
     :::
 ]=]
-export type RemoteSetting = {
-	params: typeof(Pack:Define(nil :: any)),
-	returns: typeof(Pack:Define(nil :: any))?,
+export type RemoteSetting<T, U, V..., W...> = {
+	params: Pack.ManualTuple<T, V...>, -- Wally users: use wally-package-types to fix missing type here
+	returns: Pack.ManualTuple<U, W...>?,
 	remoteType: RemoteType,
 	rateLimit: RateLimitSetting?,
 }
