@@ -4,13 +4,19 @@
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SharedTableRegistry = game:GetService("SharedTableRegistry")
 -- Modules
 local MountNamespace = require(script.MountNamespace)
 local types = require(script.types)
 
-local SALT = game.JobId
+local SALT = string.gsub(game.JobId, "-", ""):upper()
 local IS_SERVER = RunService:IsServer()
 local SHOULD_SEARCH = not IS_SERVER or script:GetActor() ~= nil -- Search for remotes if not on the main server environment
+
+local PACK_CONFIG = (SharedTableRegistry:GetSharedTable("PACK_CONFIG")) :: SharedTable
+local DEBUG = PACK_CONFIG.__DEBUG__ == true
+
+local MountedFileSet = (DEBUG and {}) :: { [Instance]: boolean }
 
 --- @Class PakNet
 --- Main class for PakNet, used to create Remotes and houses some utilities
@@ -32,8 +38,19 @@ local PakNet = {}
     multiple namespaces. One way we can do this is to create some folders under our file and create new namespaces from those.
     :::
 ]=]
-function PakNet.mount(file: Instance, RemoteTable: types.RemoteTable)
+function PakNet.mount<T>(file: Instance, RemoteTable: T | types.RemoteTable)
+	if DEBUG and IS_SERVER and not SHOULD_SEARCH then
+		if MountedFileSet[file] then warn(`[PAKNET]: Attempted to mount multiple namespaces to file {file:GetFullName()}. This may result in undefined behaviour.`) end
+		MountedFileSet[file] = true
+	end
+
 	local eventTable = MountNamespace(file, SALT, RemoteTable)
+
+	local remotes = {}
+
+	for name, settings in RemoteTable do
+		local events = eventTable[name]
+	end
 end
 
 -- Search for any remote definitions (in ReplicatedStorage/Remotes) and preload them

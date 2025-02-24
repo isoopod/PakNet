@@ -1,4 +1,5 @@
 local Pack = require(script.Parent.Parent:WaitForChild("pack"))
+export type ManualTuple<T, U...> = Pack.ManualTuple<T, U...>
 
 --[=[
     @type RemoteType "f" | "r" | "u" | "fr" | "fu" | "fru"
@@ -65,6 +66,13 @@ export type RemoteSetting<T, U, V..., W...> = {
 
 export type RemoteTable = {
 	[string]: RemoteSetting,
+}
+
+export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteEvent? }
+
+export type Server<T, V, U..., W...> = {
+	Fire: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, T, U...) -> (),
+	FireUnreliable: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, T, U...) -> (),
 }
 
 return nil

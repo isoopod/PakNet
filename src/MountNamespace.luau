@@ -48,7 +48,7 @@ local function incrementSalt(salt: string): string
 	return high .. new_low :: string
 end
 
-local function SafeMountNamespace(file: Instance, salt: string, remoteTable: types.RemoteTable): { [string]: { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteEvent? } }
+local function SafeMountNamespace(file: Instance, salt: string, remoteTable: types.RemoteTable): { [string]: types.Events }
 	-- In the event of a hash collision (very unlikely), increment the salt by one and try again until there are no collisions
 	local UsedHashSet = {}
 	local mounted = {}
