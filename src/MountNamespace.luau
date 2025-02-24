@@ -10,12 +10,11 @@ local types = require(script.Parent.types)
 local IS_SERVER = RunService:IsServer()
 local SHOULD_SEARCH = not IS_SERVER or script:GetActor() ~= nil -- Search for remotes if not on the main server environment
 
-local function splitUUID(uuid: string): (string, string)
-	local hex = uuid:gsub("-", ""):upper()
-	return hex:sub(1, 16), hex:sub(17, 32)
+local function splitSalt(uuid: string): (string, string)
+	return uuid:sub(1, 16), uuid:sub(17, 32)
 end
 
-local function incrementHex(hex: string): string
+local function incrementHex(hex: string): string?
 	local digits = {}
 	for i = 1, #hex do
 		digits[i] = hex:sub(i, i)
@@ -34,24 +33,19 @@ local function incrementHex(hex: string): string
 		end
 		i -= 1
 	end
-	if carry > 0 then
-		return string.rep("0", #digits) -- Overflow occurred
-	end
+	if carry > 0 then return nil end
 	return table.concat(digits)
 end
 
-local function incrementUUID(high: string, low: string): (string, string)
+-- Our salt is a 128bit int (the UUID from game.JobId, so we have to split it in half to increment it)
+local function incrementSalt(salt: string): string
+	local high, low = splitSalt(salt)
 	local new_low = incrementHex(low)
 	if not new_low then
 		new_low = "0000000000000000"
 		high = incrementHex(high) or "0000000000000000" -- Reset on overflow
 	end
-	return high, new_low
-end
-
-local function formatUUID(high: string, low: string): string
-	local full = high .. low
-	return string.format("%s-%s-%s-%s-%s", full:sub(1, 8), full:sub(9, 12), full:sub(13, 16), full:sub(17, 20), full:sub(21, 32))
+	return high .. new_low :: string
 end
 
 local function SafeMountNamespace(file: Instance, salt: string, remoteTable: types.RemoteTable): { [string]: { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteEvent? } }
@@ -121,7 +115,7 @@ local function SafeMountNamespace(file: Instance, salt: string, remoteTable: typ
 	end
 
 	-- In the unlikely event of a hash collision in the namespace, increment the salt by 1 and try again.
-	if not s then return SafeMountNamespace(file, formatUUID(incrementUUID(splitUUID(salt))), remoteTable) end
+	if not s then return SafeMountNamespace(file, incrementSalt(salt), remoteTable) end
 
 	return mounted
 end
