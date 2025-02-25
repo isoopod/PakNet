@@ -60,9 +60,9 @@ export type RateLimitSetting = {
     Using these tuples can be helpful and allows you to structure your data closer to how you can in regular remote events, without any overhead.
     :::
 ]=]
-export type RemoteSetting<T, U, V..., W...> = {
-	params: Pack.ManualTuple<T, V...>, -- Wally users: use wally-package-types to fix missing type here
-	returns: Pack.ManualTuple<U, W...>?,
+export type RemoteSetting<T, V, U..., W...> = {
+	params: Pack.ManualTuple<T, U...>,
+	returns: Pack.ManualTuple<V, W...>?,
 	remoteType: RemoteType,
 	rateLimit: RateLimitSetting?,
 }
@@ -74,18 +74,20 @@ export type RemoteTable = {
 export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteEvent? }
 
 export type Server<T, V, U..., W...> = {
-	onEvent: LemonSignal.Signal<Player, T, U...>,
+	read onEvent: LemonSignal.Signal<(Player, T, U...)>,
 	onInvoke: ((player: Player, T, U...) -> (V, W...))?,
 
-	Fire: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, T, U...) -> (),
-	FireAll: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, T, U...) -> (),
-	FireList: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, players: { Player }, T, U...) -> (),
-	FireExcept: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, except: { Player }, T, U...) -> (),
+	Fire: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (),
+	FireAll: (self: Server<T, V, U..., W...>, T, U...) -> (),
+	FireList: (self: Server<T, V, U..., W...>, players: { Player }, T, U...) -> (),
+	FireExcept: (self: Server<T, V, U..., W...>, except: { Player }, T, U...) -> (),
 
-	FireUnreliable: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, T, U...) -> (),
-	FireAllUnreliable: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, T, U...) -> (),
-	FireListUnreliable: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, players: { Player }, T, U...) -> (),
-	FireExceptUnreliable: <T, V, U..., W...>(self: _Server<T, V, U..., W...>, except: { Player }, T, U...) -> (),
+	FireUnreliable: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (),
+	FireAllUnreliable: (self: Server<T, V, U..., W...>, T, U...) -> (),
+	FireListUnreliable: (self: Server<T, V, U..., W...>, players: { Player }, T, U...) -> (),
+	FireExceptUnreliable: (self: Server<T, V, U..., W...>, except: { Player }, T, U...) -> (),
+
+	read _config: RemoteSetting<T, V, U..., W...>,
 }
 
 return nil

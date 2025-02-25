@@ -11,6 +11,8 @@ local Server = {}
 local ServerClass = { metatable = { __index = Server } }
 
 type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
+	onEvent: LemonSignal.Signal<(Player, T, U...)> | { _head: any? }, -- Public is marked read only
+
 	_events: types.Events,
 	_params: types.ManualTuple<T, U...>,
 	_returns: types.ManualTuple<V, W...>?,
@@ -79,10 +81,27 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	self._params = settings.params
 	self._returns = settings.returns
 
-	if self._events.r then self._events.r.OnClientEvent:Connect(function() end) end
-	if self._events.u then self._events.u.OnClientEvent:Connect(function() end) end
+	if self._events.f then self._events.f.OnServerInvoke = function(...)
+		if self.onInvoke then self.onInvoke(...) end
+	end end
+	if self._events.r then
+		self._events.r.OnClientEvent:Connect(function()
+			if self.onEvent._head then -- Check there are any connections
+				-- TODO check for ratelimit and deserialize before firing the signal
+				return
+			end
+		end)
+	end
+	if self._events.u then
+		self._events.u.OnClientEvent:Connect(function()
+			if self.onEvent._head then -- Check there are any connections
+				-- TODO check for ratelimit and deserialize before firing the signal
+				return
+			end
+		end)
+	end
 
 	return self
 end
 
-return Server
+return ServerClass

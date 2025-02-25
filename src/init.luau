@@ -7,6 +7,7 @@ local RunService = game:GetService("RunService")
 local SharedTableRegistry = game:GetService("SharedTableRegistry")
 -- Modules
 local MountNamespace = require(script.MountNamespace)
+local Server = require(script.Server)
 local types = require(script.types)
 
 local SALT = string.gsub(game.JobId, "-", ""):upper()
@@ -38,7 +39,7 @@ local PakNet = {}
     multiple namespaces. One way we can do this is to create some folders under our file and create new namespaces from those.
     :::
 ]=]
-function PakNet.mount<T>(file: Instance, RemoteTable: T | types.RemoteTable)
+function PakNet.mount(file: Instance, RemoteTable: types.RemoteTable)
 	if DEBUG and IS_SERVER and not SHOULD_SEARCH then
 		if MountedFileSet[file] then warn(`[PAKNET]: Attempted to mount multiple namespaces to file {file:GetFullName()}. This may result in undefined behaviour.`) end
 		MountedFileSet[file] = true
@@ -50,21 +51,13 @@ function PakNet.mount<T>(file: Instance, RemoteTable: T | types.RemoteTable)
 
 	for name, settings in RemoteTable do
 		local events = eventTable[name]
+
+		if IS_SERVER then remotes[name] = Server.new(events, settings :: any) end
 	end
+
+	return remotes
 end
 
--- Search for any remote definitions (in ReplicatedStorage/Remotes) and preload them
-if IS_SERVER and not SHOULD_SEARCH then
-	local remotes = ReplicatedStorage:FindFirstChild("Remotes") or (ReplicatedStorage :: ReplicatedStorage):FindFirstChild("remotes") -- type gymnastics :(
-	if remotes then
-		if remotes.ClassName == "ModuleScript" then
-			pcall(require, remotes)
-		else
-			for _, v in remotes:GetDescendants() do
-				if v.ClassName == "ModuleScript" then pcall(require, v) end
-			end
-		end
-	end
-end
+-- TODO: Create a constructor for remote settings so that we can have the types pass through and actually work
 
 return PakNet
