@@ -48,12 +48,16 @@ export type RateLimitSetting = {
     @prop params any
     @prop returns any?
     @prop remoteType RemoteType
-    @prop rateLimit RateLimitSrtting?
+    @prop rateLimit RateLimitSetting?
+    @prop timeout number?
     (type for params and returns TODO until Pack documentation is ready)
 
-    Provides the structure for creating a Remote in PakNet. These will be created in the RemoteTable when creating a namespace with PakNet.mount
+    Provides the structure for creating a Remote in PakNet. These will be created with `PakNet.defineRemote` in the RemoteTable when creating a namespace with `PakNet.mount`
 
-    params and returns (only needed if the function RemoteType is active) are Pack Schemas created with PakNet:Schema
+    params and returns (returns are only needed if the function RemoteType is active) are Pack Schemas created with `PakNet.schema`  
+    If making use of the tuple support, you will need to assert the type of this to `PakNet.ManualTuple<arg1, (...vararg)>`, as only the first arg can be infered.
+    timeout is how long the server will wait when invoking the client. If a value is not return before timeout, the request will be dropped and return nil. 
+
     :::tip
     Schemas are tuples, however because of luau limitations meaning higer-level polymorphism is not possible right now, only the first argument will be properly typed.  
     You can manually assert the type of schemas with the PakNet.ManualTuple<...> type for now.  
@@ -65,6 +69,7 @@ export type RemoteSetting<T, V, U..., W...> = {
 	returns: Pack.ManualTuple<V, W...>?,
 	remoteType: RemoteType,
 	rateLimit: RateLimitSetting?,
+	timeout: number?,
 }
 
 export type RemoteTable = {
@@ -86,8 +91,17 @@ export type Server<T, V, U..., W...> = {
 	FireAllUnreliable: (self: Server<T, V, U..., W...>, T, U...) -> (),
 	FireListUnreliable: (self: Server<T, V, U..., W...>, players: { Player }, T, U...) -> (),
 	FireExceptUnreliable: (self: Server<T, V, U..., W...>, except: { Player }, T, U...) -> (),
-
-	read _config: RemoteSetting<T, V, U..., W...>,
 }
+
+export type Client<T, V, U..., W...> = {
+	read onServerEvent: LemonSignal.Signal<(T, U...)>,
+	onServerInvoke: ((T, U...) -> (V, W...))?,
+
+	FireServer: (self: Server<T, V, U..., W...>, T, U...) -> (),
+
+	FireServerUnreliable: (self: Server<T, V, U..., W...>, T, U...) -> (),
+}
+
+export type Remote<T, V, U..., W...> = Server<T, V, U..., W...> | Client<T, V, U..., W...>
 
 return nil

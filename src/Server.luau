@@ -75,7 +75,7 @@ end
 function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types.RemoteSetting<T, V, U..., W...>): types.Server<T, V, U..., W...>
 	local self: _Server<T, V, U..., W...> = setmetatable({}, ServerClass.metatable) :: any
 
-	self.onEvent = LemonSignal.new()
+	if self._events.r or self._events.u then self.onEvent = LemonSignal.new() end
 
 	self._events = events
 	self._params = settings.params

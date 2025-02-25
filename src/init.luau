@@ -2,7 +2,6 @@
 --!optimize 2
 
 -- Services
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local SharedTableRegistry = game:GetService("SharedTableRegistry")
 -- Modules
@@ -56,6 +55,11 @@ function PakNet.mount(file: Instance, RemoteTable: types.RemoteTable)
 	end
 
 	return remotes
+end
+
+function PakNet.defineRemote<T, V, U..., W...>(settings: types.RemoteSetting<T, V, U..., W...>): types.Remote<T, V, U..., W...>
+	-- Simply remaps the settings class to a Remote type for later type inference
+	return settings :: any
 end
 
 -- TODO: Create a constructor for remote settings so that we can have the types pass through and actually work
