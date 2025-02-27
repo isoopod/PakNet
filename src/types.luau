@@ -25,7 +25,7 @@ export type ManualTuple<T, U...> = Pack.ManualTuple<T, U...>
 export type RemoteType = "f" | "r" | "u" | "fr" | "fu" | "fru"
 
 --[=[
-    @interface RateLimitSetting
+    @interface RateLimitSettings
     @within RemoteSetting
     .global boolean? -- When true - the rate limit applies for all players, otherwise is per player. Defaults to true.
     .limit number -- Maximum number of entrances in the window
@@ -36,14 +36,14 @@ export type RemoteType = "f" | "r" | "u" | "fr" | "fu" | "fru"
     This is applied on both the server and client, and the server has access to a signal triggered if a client bypasses
     their rate limit, which can be used for moderation (a client should not be able to get around the rate limit without exploits)
 ]=]
-export type RateLimitSetting = {
+export type RateLimitSettings = {
 	global: boolean?,
 	limit: number,
 	window: number,
 }
 
 --[=[
-    @class RemoteSetting
+    @class RemoteSettings
 
     @prop params any
     @prop returns any?
@@ -64,16 +64,16 @@ export type RateLimitSetting = {
     Using these tuples can be helpful and allows you to structure your data closer to how you can in regular remote events, without any overhead.
     :::
 ]=]
-export type RemoteSetting<T, V, U..., W...> = {
+export type RemoteSettings<T, V, U..., W...> = {
 	params: Pack.ManualTuple<T, U...>,
 	returns: Pack.ManualTuple<V, W...>?,
 	remoteType: RemoteType,
-	rateLimit: RateLimitSetting?,
+	rateLimit: RateLimitSettings?,
 	timeout: number?,
 }
 
 export type RemoteTable = {
-	[string]: RemoteSetting,
+	[string]: RemoteSettings,
 }
 
 export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteEvent? }
@@ -81,6 +81,7 @@ export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteE
 export type Server<T, V, U..., W...> = {
 	read onEvent: LemonSignal.Signal<(Player, T, U...)>,
 	onInvoke: ((player: Player, T, U...) -> (V, W...))?,
+	onRateLimitted: LemonSignal.Signal<Player>,
 
 	Fire: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (),
 	FireAll: (self: Server<T, V, U..., W...>, T, U...) -> (),
@@ -94,8 +95,8 @@ export type Server<T, V, U..., W...> = {
 }
 
 export type Client<T, V, U..., W...> = {
-	read onServerEvent: LemonSignal.Signal<(T, U...)>,
-	onServerInvoke: ((T, U...) -> (V, W...))?,
+	read onClientEvent: LemonSignal.Signal<(T, U...)>,
+	onClientInvoke: ((T, U...) -> (V, W...))?,
 
 	FireServer: (self: Server<T, V, U..., W...>, T, U...) -> (),
 
