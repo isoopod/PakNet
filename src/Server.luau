@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Modules
 local LemonSignal = require(ReplicatedStorage.Packages.lemonsignal)
+local Ratelimit = require(script.Parent.Ratelimit)
 local types = require(script.Parent.types)
 
 local Server = {}
@@ -16,15 +17,23 @@ type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 	_events: types.Events,
 	_params: types.ManualTuple<T, U...>,
 	_returns: types.ManualTuple<V, W...>?,
+	_ratelimit: Ratelimit.RateLimit?,
+
+	_RateLimited: (self: types.Server<T, V, U..., W...>, player: Player) -> boolean,
 }
+
+function Server._RateLimited<T, V, U..., W...>(self: _Server<T, V, U..., W...>, player: Player): boolean
+	if self._ratelimit then return not self._ratelimit:RequestAllowed(player) end
+	return false
+end
 
 function Server.Fire<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, v1: T, ...: U...)
 	assert(self._events.r, "[PAKNET]: To use 'Fire' you must have 'r' in the remoteType.")
 
-	local s, packet: buffer = pcall(self._params.Write, self._params, v1, ...)
+	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
 
-	self._events.r:FireClient(to, packet)
+	self._events.r:FireClient(to, packet, --[[>>> Can be simplified next Pack Update]] #refs > 0 and refs or nil)
 end
 
 function Server.FireAll<T, V, U..., W...>(self: _Server<T, V, U..., W...>, v1: T, ...: U...)
@@ -48,10 +57,10 @@ end
 function Server.FireUnreliable<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, v1: T, ...: U...)
 	assert(self._events.u, "[PAKNET]: To use 'FireUnreliable' you must have 'u' in the remoteType.")
 
-	local s, packet: buffer = pcall(self._params.Write, self._params, v1, ...)
+	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding unreliable packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
 
-	self._events.u:FireClient(to, packet)
+	self._events.u:FireClient(to, packet, --[[>>> Can be simplified next Pack Update]] #refs > 0 and refs or nil)
 end
 
 function Server.FireAllUnreliable<T, V, U..., W...>(self: _Server<T, V, U..., W...>, v1: T, ...: U...)
@@ -72,7 +81,7 @@ function Server.FireExceptUnreliable<T, V, U..., W...>(self: _Server<T, V, U...,
 	end
 end
 
-function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types.RemoteSetting<T, V, U..., W...>): types.Server<T, V, U..., W...>
+function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types.RemoteSettings<T, V, U..., W...>): types.Server<T, V, U..., W...>
 	local self: _Server<T, V, U..., W...> = setmetatable({}, ServerClass.metatable) :: any
 
 	if self._events.r or self._events.u then self.onEvent = LemonSignal.new() end
@@ -81,22 +90,24 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	self._params = settings.params
 	self._returns = settings.returns
 
-	if self._events.f then self._events.f.OnServerInvoke = function(...)
-		if self.onInvoke then self.onInvoke(...) end
-	end end
+	if settings.rateLimit then self._ratelimit = Ratelimit.new(settings.rateLimit) end
+
+	if self._events.f then
+		self._events.f.OnServerInvoke = function(player: Player, ...)
+			if self.onInvoke and not self:_RateLimited(player) then self.onInvoke(player, ...) end
+		end
+	end
 	if self._events.r then
-		self._events.r.OnClientEvent:Connect(function()
-			if self.onEvent._head then -- Check there are any connections
-				-- TODO check for ratelimit and deserialize before firing the signal
-				return
+		self._events.r.OnServerEvent:Connect(function(player, buff, refs)
+			if self.onEvent._head and not self:_RateLimited(player) then -- Check there are any connections and if we are rate limited
+				self.onEvent:Fire(player, self._params:Read(buff, refs))
 			end
 		end)
 	end
 	if self._events.u then
-		self._events.u.OnClientEvent:Connect(function()
-			if self.onEvent._head then -- Check there are any connections
-				-- TODO check for ratelimit and deserialize before firing the signal
-				return
+		self._events.u.OnServerEvent:Connect(function(player, buff, refs)
+			if self.onEvent._head and not self:_RateLimited(player) then -- Check there are any connections and if we are rate limited
+				self.onEvent:Fire(player, self._params:Read(buff, refs))
 			end
 		end)
 	end
