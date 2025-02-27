@@ -23,7 +23,11 @@ type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 }
 
 function Server._RateLimited<T, V, U..., W...>(self: _Server<T, V, U..., W...>, player: Player): boolean
-	if self._ratelimit then return not self._ratelimit:RequestAllowed(player) end
+	if self._ratelimit then
+		local rateLimited = self._ratelimit:RequestAllowed(player)
+		if rateLimited then self.onRateLimited:Fire(player) end
+		return rateLimited
+	end
 	return false
 end
 
@@ -85,6 +89,7 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	local self: _Server<T, V, U..., W...> = setmetatable({}, ServerClass.metatable) :: any
 
 	if self._events.r or self._events.u then self.onEvent = LemonSignal.new() end
+	self.onRateLimited = LemonSignal.new()
 
 	self._events = events
 	self._params = settings.params

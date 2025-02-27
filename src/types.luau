@@ -81,7 +81,7 @@ export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteE
 export type Server<T, V, U..., W...> = {
 	read onEvent: LemonSignal.Signal<(Player, T, U...)>,
 	onInvoke: ((player: Player, T, U...) -> (V, W...))?,
-	onRateLimitted: LemonSignal.Signal<Player>,
+	onRateLimited: LemonSignal.Signal<Player>,
 
 	Fire: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (),
 	FireAll: (self: Server<T, V, U..., W...>, T, U...) -> (),
