@@ -93,8 +93,8 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	if settings.rateLimit then self._ratelimit = Ratelimit.new(settings.rateLimit) end
 
 	if self._events.f then
-		self._events.f.OnServerInvoke = function(player: Player, ...)
-			if self.onInvoke and not self:_RateLimited(player) then self.onInvoke(player, ...) end
+		self._events.f.OnServerInvoke = function(player: Player, buff, refs)
+			if self.onInvoke and not self:_RateLimited(player) then self.onInvoke(player, self._params:Read(buff, refs)) end
 		end
 	end
 	if self._events.r then
