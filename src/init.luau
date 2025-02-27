@@ -57,7 +57,7 @@ function PakNet.mount(file: Instance, RemoteTable: types.RemoteTable)
 	return remotes
 end
 
-function PakNet.defineRemote<T, V, U..., W...>(settings: types.RemoteSetting<T, V, U..., W...>): types.Remote<T, V, U..., W...>
+function PakNet.defineRemote<T, V, U..., W...>(settings: types.RemoteSettings<T, V, U..., W...>): types.Remote<T, V, U..., W...>
 	-- Simply remaps the settings class to a Remote type for later type inference
 	return settings :: any
 end
