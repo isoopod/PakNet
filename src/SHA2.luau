@@ -6,8 +6,8 @@
 
 -- Type inference was breaking here so there are a bunch of seemingly out of place :any types where there should be numbers
 
--- Why does PakNet include SHA library?
--- We hash the names of the generated remote event instances to make it harder to tell whats happening when using tools like Remote Spy
+-- Why does PakNet include an SHA library?
+-- We hash the names of the generated remote event instances to make it harder to tell whats happening when using tools like SimpleSpy
 -- From an exploiters point of view, they will just see the hashed name of the remote fired, making it harder to understand whats happening
 -- An exploiter would have to manually hash all the remote names in the file the remote's namespace.
 -- Combining this with the binary payload format, more specialized tools are needed to reverse engineer your networking.

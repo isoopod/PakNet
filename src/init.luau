@@ -18,7 +18,7 @@ local DEBUG = PACK_CONFIG.__DEBUG__ == true
 
 local MountedFileSet = (DEBUG and {}) :: { [Instance]: boolean }
 
---- @Class PakNet
+--- @class PakNet
 --- Main class for PakNet, used to create Remotes and houses some utilities
 local PakNet = {}
 
@@ -27,7 +27,7 @@ local PakNet = {}
 
     @param file Instance
     @param RemoteTable {[string]: RemoteSetting}
-    @return Namespace any
+    @return {[string]: Server | Client}
 
     :::tip[Advanced]
     The reason file must be specified is because that is where the remote event instances will be stored under for each Remote. The reason we create events for each Remote

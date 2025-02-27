@@ -9,3 +9,6 @@
 /sourcemap.json
 /DevPackages
 /Packages
+node_modules
+package-lock.json
+package.json
