@@ -26,6 +26,8 @@ type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 	_RateLimited: (self: types.Server<T, V, U..., W...>, player: Player) -> boolean,
 }
 
+Server.ClassName = "Server"
+
 function Server._RateLimited<T, V, U..., W...>(self: _Server<T, V, U..., W...>, player: Player): boolean
 	if self._ratelimit then
 		local rateLimited = self._ratelimit:RequestAllowed(player)

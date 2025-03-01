@@ -25,6 +25,8 @@ type _Client<T, V, U..., W...> = types.Client<T, V, U..., W...> & {
 	_RateLimited: (self: types.Client<T, V, U..., W...>) -> boolean,
 }
 
+Client.ClassName = "Client"
+
 function Client._RateLimited<T, V, U..., W...>(self: _Client<T, V, U..., W...>): boolean
 	if self._ratelimit then
 		local rateLimited = self._ratelimit:RequestAllowed()

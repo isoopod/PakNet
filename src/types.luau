@@ -93,6 +93,8 @@ export type RemoteTable = {
 export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteEvent? }
 
 export type Server<T, V, U..., W...> = {
+	read ClassName: "Server",
+
 	read onEvent: LemonSignal.Signal<(Player, T, U...)>,
 	read onRateLimited: LemonSignal.Signal<Player>,
 	onInvoke: ((player: Player, T, U...) -> (V, W...))?,
@@ -113,16 +115,18 @@ export type Server<T, V, U..., W...> = {
 
 --- @class Client
 export type Client<T, V, U..., W...> = {
+	read ClassName: "Client",
+
 	read onClientEvent: LemonSignal.Signal<(T, U...)>,
 	read onRateLimited: LemonSignal.Signal<>,
 	onClientInvoke: ((T, U...) -> (V, W...))?,
 
-	FireServer: (self: Server<T, V, U..., W...>, T, U...) -> (),
+	FireServer: (self: Client<T, V, U..., W...>, T, U...) -> (),
 
-	FireServerUnreliable: (self: Server<T, V, U..., W...>, T, U...) -> (),
+	FireServerUnreliable: (self: Client<T, V, U..., W...>, T, U...) -> (),
 
-	InvokeServer: (self: Server<T, V, U..., W...>, T, U...) -> (V, W...),
-	InvokeServerAsync: (self: Server<T, V, U..., W...>, T, U...) -> Promise.TypedPromise<V, W...>,
+	InvokeServer: (self: Client<T, V, U..., W...>, T, U...) -> (V, W...),
+	InvokeServerAsync: (self: Client<T, V, U..., W...>, T, U...) -> Promise.TypedPromise<V, W...>,
 }
 
 export type Remote<T, V, U..., W...> = Server<T, V, U..., W...> | Client<T, V, U..., W...>
@@ -130,6 +134,9 @@ export type Remote<T, V, U..., W...> = Server<T, V, U..., W...> | Client<T, V, U
 export type PakNet = {
 	Mount: <T>(self: PakNet, file: Instance, RemoteTable: T) -> T,
 	DefineRemote: <T, V, U..., W...>(self: PakNet, settings: RemoteSettings<T, V, U..., W...>) -> Remote<T, V, U..., W...>,
+	Schema: <T, U...>(self: PakNet, T, U...) -> ManualTuple<T, U...>,
+
+	Signal: (identifier: string) -> LemonSignal.Signal<>,
 
 	-- TODO: Export the Pack datatypes type and union that
 	-- For now we will just duplicate the definition here

@@ -6,6 +6,7 @@ local RunService = game:GetService("RunService")
 local SharedTableRegistry = game:GetService("SharedTableRegistry")
 -- Modules
 local Client = require(script.Client)
+local LemonSignal = require(script.Parent.lemonsignal)
 local MountNamespace = require(script.MountNamespace)
 local Pack = require(script.Parent.pack)
 local Server = require(script.Server)
@@ -68,8 +69,18 @@ function PakNet.DefineRemote<T, V, U..., W...>(_: types.PakNet, settings: types.
 	return settings :: any
 end
 
+export type Schema<T, U...> = types.ManualTuple<T, U...>
 function PakNet.Schema<T, U...>(v1: T, ...: U...)
 	return Pack:Define(v1, ...)
+end
+
+-- Global signal by identifier
+export type Signal = LemonSignal.Signal<...any>
+local signals = {}
+
+function PakNet.Signal(identifier: string): Signal
+	signals[identifier] = signals[identifier] or LemonSignal.new()
+	return signals[identifier]
 end
 
 function PakNet.__index(self, key)
@@ -91,4 +102,4 @@ local object = setmetatable({
 	},
 }, PakNet) :: any
 
-return object
+return object :: types.PakNet
