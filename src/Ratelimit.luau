@@ -1,4 +1,6 @@
 --!strict
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 --[[ RateLimit
 Sliding window rate-limit applied on server and client
@@ -10,14 +12,14 @@ local types = require(script.Parent.types)
 local RateLimit = {}
 local RateLimitClass = { metatable = { __index = RateLimit } }
 export type RateLimit = {
-	read global: boolean,
+	read global: boolean?,
 	read limit: number,
 	read window: number,
 
 	RequestAllowed: (self: RateLimit, player: Player?) -> boolean,
 }
 type _RateLimit = RateLimit & {
-	global: boolean,
+	global: boolean?,
 	limit: number,
 	window: number,
 
@@ -64,13 +66,19 @@ function RateLimit.RequestAllowed(self: _RateLimit, player: Player?): boolean
 		local removeUpTo = findHighestLessThan(self._requests[player], time() - self.window)
 		if removeUpTo then truncateArray(self._requests[player], removeUpTo) end
 
-		if #self._requests[player] <= self.limit then return true end
+		if #self._requests[player] < self.limit then
+			table.insert(self._requests[player], time())
+			return true
+		end
 	else
 		-- Find the index we should remove all before as these requests are older than the window
 		local removeUpTo = findHighestLessThan(self._globalRequests, time() - self.window)
 		if removeUpTo then truncateArray(self._globalRequests, removeUpTo) end
 
-		if #self._globalRequests <= self.limit then return true end
+		if #self._globalRequests < self.limit then
+			table.insert(self._globalRequests, time())
+			return true
+		end
 	end
 	return false
 end
@@ -78,12 +86,15 @@ end
 function RateLimitClass.new(settings: types.RateLimitSettings): RateLimit
 	local self: _RateLimit = setmetatable({}, RateLimitClass.metatable) :: any
 
-	self.global = settings.global or false
+	self.global = settings.global
 	self.limit = settings.limit
 	self.window = settings.window
 
-	if self.global then
-		self._requests = setmetatable({}, { __mode = "k" })
+	if not self.global then
+		self._requests = {}
+		if RunService:IsServer() then Players.PlayerRemoving:Connect(function(player: Player)
+			self._requests[player] = nil
+		end) end
 	else
 		self._globalRequests = {}
 	end

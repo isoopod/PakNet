@@ -30,9 +30,9 @@ Server.ClassName = "Server"
 
 function Server._RateLimited<T, V, U..., W...>(self: _Server<T, V, U..., W...>, player: Player): boolean
 	if self._ratelimit then
-		local rateLimited = self._ratelimit:RequestAllowed(player)
-		if rateLimited then self.onRateLimited:Fire(player) end
-		return rateLimited
+		local ratelimited = not self._ratelimit:RequestAllowed(player)
+		if ratelimited then self.onRateLimited:Fire(player) end
+		return ratelimited
 	end
 	return false
 end

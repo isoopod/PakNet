@@ -29,9 +29,9 @@ Client.ClassName = "Client"
 
 function Client._RateLimited<T, V, U..., W...>(self: _Client<T, V, U..., W...>): boolean
 	if self._ratelimit then
-		local rateLimited = self._ratelimit:RequestAllowed()
-		if rateLimited then self.onRateLimited:Fire() end
-		return rateLimited
+		local ratelimited = not self._ratelimit:RequestAllowed()
+		if ratelimited then self.onRateLimited:Fire() end
+		return ratelimited
 	end
 	return false
 end
@@ -41,6 +41,8 @@ end
 --- @param args ...any -- The arguments tuple specified by the params schema
 function Client.FireServer<T, V, U..., W...>(self: _Client<T, V, U..., W...>, v1: T, ...: U...)
 	assert(self._events.r, "[PAKNET]: To use 'Fire' you must have 'r' in the remoteType.")
+
+	if self:_RateLimited() then return end
 
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
@@ -62,6 +64,8 @@ end
 function Client.FireServerUnreliable<T, V, U..., W...>(self: _Client<T, V, U..., W...>, v1: T, ...: U...)
 	assert(self._events.u, "[PAKNET]: To use 'FireUnreliable' you must have 'u' in the remoteType.")
 
+	if self:_RateLimited() then return end
+
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding unreliable packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
 
@@ -81,6 +85,8 @@ end
 ]=]
 function Client.InvokeServer<T, V, U..., W...>(self: _Client<T, V, U..., W...>, v1: T, ...: U...): (V, W...)
 	assert(self._events.f, "[PAKNET]: To use 'InvokeServer' you must have 'f' in the remoteType.")
+
+	if self:_RateLimited() then return nil :: any end
 
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
@@ -142,6 +148,8 @@ function Client.InvokeServerAsync<T, V, U..., W...>(self: _Client<T, V, U..., W.
 	local vararg = { ... }
 
 	return Promise.new(function(resolve, reject, onCancel)
+		if self:_RateLimited() then reject("Request dropped due to rate limit") end
+
 		local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, unpack(vararg))
 		if not s then
 			reject(`Error encoding packet for transmission: {packet}\nArguments: {v1}, {table.concat(vararg, ", ")}`)
@@ -197,20 +205,20 @@ function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types
 
 	if self._events.f then
 		self._events.f.OnClientInvoke = function(buff, refs)
-			if self.onClientInvoke and not self:_RateLimited() then return self.onClientInvoke(self._params:Read(buff, refs)) end
+			if self.onClientInvoke then return self.onClientInvoke(self._params:Read(buff, refs)) end
 			return nil :: any
 		end
 	end
 	if self._events.r then
 		self._events.r.OnClientEvent:Connect(function(buff, refs)
-			if self.onClientEvent._head and not self:_RateLimited() then -- Check there are any connections and if we are rate limited
+			if self.onClientEvent._head then -- Check there are any connections and if we are rate limited
 				self.onClientEvent:Fire(self._params:Read(buff, refs))
 			end
 		end)
 	end
 	if self._events.u then
 		self._events.u.OnClientEvent:Connect(function(buff, refs)
-			if self.onClientEvent._head and not self:_RateLimited() then -- Check there are any connections and if we are rate limited
+			if self.onClientEvent._head then -- Check there are any connections and if we are rate limited
 				self.onClientEvent:Fire(self._params:Read(buff, refs))
 			end
 		end)
