@@ -13,6 +13,8 @@ local Server = require(script.Server)
 local types = require(script.types)
 
 local SALT = string.gsub(game.JobId, "-", ""):upper()
+if SALT == "" then SALT = "00000000000000000000000000000000" end -- For local testing, JobId on server is '' while on client it is a UUID of all 0's
+
 local IS_SERVER = RunService:IsServer()
 local SHOULD_SEARCH = not IS_SERVER or script:GetActor() ~= nil -- Search for remotes if not on the main server environment
 
@@ -70,7 +72,7 @@ function PakNet.DefineRemote<T, V, U..., W...>(_: types.PakNet, settings: types.
 end
 
 export type Schema<T, U...> = types.ManualTuple<T, U...>
-function PakNet.Schema<T, U...>(v1: T, ...: U...)
+function PakNet.Schema<T, U...>(_, v1: T, ...: U...)
 	return Pack:Define(v1, ...)
 end
 

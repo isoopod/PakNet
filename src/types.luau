@@ -113,7 +113,6 @@ export type Server<T, V, U..., W...> = {
 	InvokeAsync: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> Promise.TypedPromise<V, W...>,
 }
 
---- @class Client
 export type Client<T, V, U..., W...> = {
 	read ClassName: "Client",
 
@@ -129,7 +128,7 @@ export type Client<T, V, U..., W...> = {
 	InvokeServerAsync: (self: Client<T, V, U..., W...>, T, U...) -> Promise.TypedPromise<V, W...>,
 }
 
-export type Remote<T, V, U..., W...> = Server<T, V, U..., W...> | Client<T, V, U..., W...>
+export type Remote<T, V, U..., W...> = Server<T, V, U..., W...> & Client<T, V, U..., W...>
 
 export type PakNet = {
 	Mount: <T>(self: PakNet, file: Instance, RemoteTable: T) -> T,
@@ -158,7 +157,7 @@ export type PakNet = {
 	read float32: number,
 	read Float: number,
 	read float64: number,
-	read double: number,
+	read Double: number,
 
 	read boolean: boolean,
 	read BitField: (length: number) -> { boolean },

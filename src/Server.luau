@@ -284,13 +284,13 @@ end
 function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types.RemoteSettings<T, V, U..., W...>): types.Server<T, V, U..., W...>
 	local self: _Server<T, V, U..., W...> = setmetatable({}, ServerClass.metatable) :: any
 
-	if self._events.r or self._events.u then self.onEvent = LemonSignal.new() end
-	self.onRateLimited = LemonSignal.new()
-
 	self._events = events
 	self._params = settings.params
 	self._returns = settings.returns
 	self._timeout = settings.timeout
+
+	if self._events.r or self._events.u then self.onEvent = LemonSignal.new() end
+	self.onRateLimited = LemonSignal.new()
 
 	if settings.rateLimit then self._ratelimit = Ratelimit.new(settings.rateLimit) end
 

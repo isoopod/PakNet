@@ -182,13 +182,13 @@ end
 function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types.RemoteSettings<T, V, U..., W...>): types.Client<T, V, U..., W...>
 	local self: _Client<T, V, U..., W...> = setmetatable({}, ClientClass.metatable) :: any
 
-	if self._events.r or self._events.u then self.onClientEvent = LemonSignal.new() end
-	self.onRateLimited = LemonSignal.new()
-
 	self._events = events
 	self._params = settings.params
 	self._returns = settings.returns
 	self._timeout = settings.timeout
+
+	if self._events.r or self._events.u then self.onClientEvent = LemonSignal.new() end
+	self.onRateLimited = LemonSignal.new()
 
 	if settings.rateLimit then
 		settings.rateLimit.global = true -- Always treat as global on client
