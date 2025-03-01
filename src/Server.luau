@@ -1,8 +1,9 @@
 --!strict
 --!optimize 2
+
+-- Services
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 -- Modules
 local LemonSignal = require(ReplicatedStorage.Packages.lemonsignal)
 local Promise = require(ReplicatedStorage.Packages["typed-promise"])
@@ -14,6 +15,7 @@ local ServerClass = { metatable = { __index = Server } }
 
 type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 	onEvent: LemonSignal.Signal<(Player, T, U...)> | { _head: any? }, -- Public is marked read only
+	onRateLimited: LemonSignal.Signal<Player>,
 
 	_events: types.Events,
 	_params: types.ManualTuple<T, U...>,
@@ -292,7 +294,8 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 
 	if self._events.f then
 		self._events.f.OnServerInvoke = function(player: Player, buff, refs)
-			if self.onInvoke and not self:_RateLimited(player) then self.onInvoke(player, self._params:Read(buff, refs)) end
+			if self.onInvoke and not self:_RateLimited(player) then return self.onInvoke(player, self._params:Read(buff, refs)) end
+			return nil :: any
 		end
 	end
 	if self._events.r then

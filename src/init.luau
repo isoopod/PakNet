@@ -5,7 +5,9 @@
 local RunService = game:GetService("RunService")
 local SharedTableRegistry = game:GetService("SharedTableRegistry")
 -- Modules
+local Client = require(script.Client)
 local MountNamespace = require(script.MountNamespace)
+local Pack = require(script.Parent.pack)
 local Server = require(script.Server)
 local types = require(script.types)
 
@@ -38,7 +40,7 @@ local PakNet = {}
     multiple namespaces. One way we can do this is to create some folders under our file and create new namespaces from those.
     :::
 ]=]
-function PakNet.mount(file: Instance, RemoteTable: types.RemoteTable)
+function PakNet.Mount(_: types.PakNet, file: Instance, RemoteTable: types.RemoteTable)
 	if DEBUG and IS_SERVER and not SHOULD_SEARCH then
 		if MountedFileSet[file] then warn(`[PAKNET]: Attempted to mount multiple namespaces to file {file:GetFullName()}. This may result in undefined behaviour.`) end
 		MountedFileSet[file] = true
@@ -46,22 +48,47 @@ function PakNet.mount(file: Instance, RemoteTable: types.RemoteTable)
 
 	local eventTable = MountNamespace(file, SALT, RemoteTable)
 
-	local remotes = {}
+	local remotes: { [string]: any } = {}
 
 	for name, settings in RemoteTable do
 		local events = eventTable[name]
 
-		if IS_SERVER then remotes[name] = Server.new(events, settings :: any) end
+		if IS_SERVER then
+			remotes[name] = Server.new(events, settings :: any)
+		else
+			remotes[name] = Client.new(events, settings :: any)
+		end
 	end
 
 	return remotes
 end
 
-function PakNet.defineRemote<T, V, U..., W...>(settings: types.RemoteSettings<T, V, U..., W...>): types.Remote<T, V, U..., W...>
+function PakNet.DefineRemote<T, V, U..., W...>(_: types.PakNet, settings: types.RemoteSettings<T, V, U..., W...>): types.Remote<T, V, U..., W...>
 	-- Simply remaps the settings class to a Remote type for later type inference
 	return settings :: any
 end
 
--- TODO: Create a constructor for remote settings so that we can have the types pass through and actually work
+function PakNet.Schema<T, U...>(v1: T, ...: U...)
+	return Pack:Define(v1, ...)
+end
 
-return PakNet
+function PakNet.__index(self, key)
+	if PakNet[key] then return PakNet[key] end
+
+	local redirects = rawget(self, "_redirects") :: { [string]: any }
+	if redirects[key] then return redirects[key] end
+
+	return Pack[key]
+end
+
+local object = setmetatable({
+	-- Redirects some datatype lookups that would go to Pack to PakNet specific datatypes
+	-- These don't need to be lazy-loaded, as PakNet is probably only going to be used on the main thread
+	_redirects = {
+		Instance = require(script.PakNetDatatypes.ref),
+		ref = require(script.PakNetDatatypes.ref),
+		-- We will keep the default behaviour of 'any' once implemented in Pack, and explain the difference between any and ref in the PakNet documentation
+	},
+}, PakNet) :: any
+
+return object

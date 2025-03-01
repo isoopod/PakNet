@@ -94,8 +94,8 @@ export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteE
 
 export type Server<T, V, U..., W...> = {
 	read onEvent: LemonSignal.Signal<(Player, T, U...)>,
+	read onRateLimited: LemonSignal.Signal<Player>,
 	onInvoke: ((player: Player, T, U...) -> (V, W...))?,
-	onRateLimited: LemonSignal.Signal<Player>,
 
 	Fire: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (),
 	FireAll: (self: Server<T, V, U..., W...>, T, U...) -> (),
@@ -114,13 +114,88 @@ export type Server<T, V, U..., W...> = {
 --- @class Client
 export type Client<T, V, U..., W...> = {
 	read onClientEvent: LemonSignal.Signal<(T, U...)>,
+	read onRateLimited: LemonSignal.Signal<>,
 	onClientInvoke: ((T, U...) -> (V, W...))?,
 
 	FireServer: (self: Server<T, V, U..., W...>, T, U...) -> (),
 
 	FireServerUnreliable: (self: Server<T, V, U..., W...>, T, U...) -> (),
+
+	InvokeServer: (self: Server<T, V, U..., W...>, T, U...) -> (V, W...),
+	InvokeServerAsync: (self: Server<T, V, U..., W...>, T, U...) -> Promise.TypedPromise<V, W...>,
 }
 
 export type Remote<T, V, U..., W...> = Server<T, V, U..., W...> | Client<T, V, U..., W...>
+
+export type PakNet = {
+	Mount: <T>(self: PakNet, file: Instance, RemoteTable: T) -> T,
+	DefineRemote: <T, V, U..., W...>(self: PakNet, settings: RemoteSettings<T, V, U..., W...>) -> Remote<T, V, U..., W...>,
+
+	-- TODO: Export the Pack datatypes type and union that
+	-- For now we will just duplicate the definition here
+	--====================================================--
+	read uint8: number,
+	read UByte: number,
+	read uint16: number,
+	read UShort: number,
+	read uint32: number,
+	read UInt: number,
+
+	read int8: number,
+	read Byte: number,
+	read int16: number,
+	read Short: number,
+	read int32: number,
+	read Int: number,
+
+	read float32: number,
+	read Float: number,
+	read float64: number,
+	read double: number,
+
+	read boolean: boolean,
+	read BitField: (length: number) -> { boolean },
+
+	read string8: string,
+	read string16: string,
+	read string32: string,
+	read string_fixed: (len: number) -> string,
+
+	read buffer8: buffer,
+	read buffer16: buffer,
+	read buffer32: buffer,
+	read buffer_fixed: (len: number) -> buffer,
+
+	read Color3: Color3,
+	read Color3float32: Color3,
+	read BrickColor: BrickColor,
+
+	read CFrame: CFrame,
+	read Vector3: vector & Vector3,
+	read Vector3int16: vector & Vector3,
+	read Vector2: Vector2,
+	read Vector2int16: Vector2,
+	read Region3: Region3,
+	read Region3int16: Region3int16,
+	read UDim: Udim,
+	read UDim2: UDim2,
+
+	read DateTime: DateTime,
+	read EnumItem: EnumItem,
+	read Instance: Instance,
+
+	read custom: <T>(read: (Reader) -> T, write: (Writer, T) -> ()) -> T,
+	read object: <T, U>(metatable: T, classData: U) -> typeof(setmetatable({} :: U, {} :: T)),
+
+	read Array: <T>(type: T) -> { T },
+	read Dictionary: <T>(format: T) -> T,
+	read Map: <K, V>(keyType: K, valueType: V) -> { [K]: V },
+
+	read null: nil,
+	read nullable: <T>(type: T) -> T?,
+	--====================================================--
+
+	read ref: any,
+}
 
 return nil
