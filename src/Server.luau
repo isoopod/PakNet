@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Modules
 local LemonSignal = require(ReplicatedStorage.Packages.lemonsignal)
+local Promise = require(ReplicatedStorage.Packages["typed-promise"])
 local Ratelimit = require(script.Parent.Ratelimit)
 local types = require(script.Parent.types)
 
@@ -215,6 +216,64 @@ function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Pl
 	coroutine.yield()
 
 	return table.unpack(result or {}) :: any
+end
+
+--[=[
+	@method InvokeAsync
+	@within Server
+	@param to Player
+	@param args ..any -- The arguments tuple specified by the params schema
+	@external Promise https://eryn.io/roblox-lua-promise/api/Promise
+	@return Promise
+
+	Asynchronous variant of Invoke that does not block the calling thread, and instead returns a Promise  
+
+	:::danger
+	Without an timeout set, the promise can yield forever.
+
+	You could use the Promise:timeout(n) method as well, just make sure to do this everywhere if you are removing the timeout.  
+	You may want to set timeout very high as opposed to removing it, as without it the promise will raise a warning after 15 seconds.
+	:::
+]=]
+function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, v1: T, ...: U...): Promise.TypedPromise<V, W...>
+	assert(self._events.f, "[PAKNET]: To use 'InvokeAsync' you must have 'f' in the remoteType.")
+	local vararg = { ... }
+
+	return Promise.new(function(resolve, reject, onCancel)
+		local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, unpack(vararg))
+		if not s then
+			reject(`Error encoding packet for transmission: {packet}\nArguments: {v1}, {table.concat(vararg, ", ")}`)
+			return
+		end
+
+		local invokeThread, timeoutThread
+
+		-- Handle cancellation
+		onCancel(function()
+			pcall(task.cancel, timeoutThread)
+			pcall(task.cancel, invokeThread)
+		end)
+
+		-- Invoke the client
+		invokeThread = task.spawn(function()
+			local result = { self._events.f:InvokeClient(to, packet, #refs > 0 and refs or nil) }
+			pcall(task.cancel, timeoutThread)
+			resolve(table.unpack(result))
+		end)
+
+		-- Timeout handling
+		if self._timeout then
+			timeoutThread = task.delay(self._timeout, function()
+				pcall(task.cancel, invokeThread)
+				reject(`Invoke timed out after {self._timeout} seconds.`)
+			end)
+		else
+			-- Warn after 15 seconds if no timeout is set
+			timeoutThread = task.delay(15, function()
+				warn(debug.traceback("[PAKNET]: Warning: Possible infinite yield in Server.Invoke"))
+			end)
+		end
+	end) :: any
 end
 
 --- @class Server

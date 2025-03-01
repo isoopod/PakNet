@@ -2,6 +2,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LemonSignal = require(ReplicatedStorage.Packages.lemonsignal)
 local Pack = require(ReplicatedStorage.Packages.pack)
+local Promise = require(ReplicatedStorage.Packages["typed-promise"])
+
 export type ManualTuple<T, U...> = Pack.ManualTuple<T, U...>
 
 --[=[
@@ -104,6 +106,9 @@ export type Server<T, V, U..., W...> = {
 	FireAllUnreliable: (self: Server<T, V, U..., W...>, T, U...) -> (),
 	FireListUnreliable: (self: Server<T, V, U..., W...>, players: { Player }, T, U...) -> (),
 	FireExceptUnreliable: (self: Server<T, V, U..., W...>, except: { Player }, T, U...) -> (),
+
+	Invoke: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (V, W...),
+	InvokeAsync: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> Promise.TypedPromise<V, W...>,
 }
 
 --- @class Client
