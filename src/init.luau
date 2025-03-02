@@ -28,20 +28,22 @@ local MountedFileSet = (DEBUG and {}) :: { [Instance]: boolean }
 local PakNet = {}
 
 --[=[
-    Mounts a file (any instance but probably the module script remotes are being created in) and a table of Remote definitions to create a namespace
+	@method Mount
+	@within PakNet
+	@param file Instance
+	@param RemoteTable {[string]: RemoteSetting}
+	@return {[string]: Server | Client}
+	
+	Mounts a namespace (RemoteTable) to a file, with the file usually being the ModuleScript calling this method.
 
-    @param file Instance
-    @param RemoteTable {[string]: RemoteSetting}
-    @return {[string]: Server | Client}
+	:::warning
+	Do not mount multiple namespaces to the same file. This can cause name collisions and break everything — even if the namespaces don't overlap.
+	:::
 
-    :::tip[Advanced]
-    The reason file must be specified is because that is where the remote event instances will be stored under for each Remote. The reason we create events for each Remote
-    unlike other libraries is that sending a packet identifier is wasted bandwidth and it's better to let RakNet handle it. The permanent memory overhead from the extra
-    events in negligable and network bandwidth is far limited with the 50kbps cap.
-
-    This in theory means we cant have multiple remotes with the same name in one module, but what if you want to further categorize said file by organising remotes into
-    multiple namespaces. One way we can do this is to create some folders under our file and create new namespaces from those.
-    :::
+	:::tip[Organizational Tips]
+	- Typically, you'll mount the remote directly to the current script.
+	- If you want to create multiple namespaces within a single script for better organization, create folders under the module for each namespace and mount to those.
+	:::
 ]=]
 function PakNet.Mount(_: types.PakNet, file: Instance, RemoteTable: types.RemoteTable)
 	if DEBUG and IS_SERVER and not SHOULD_SEARCH then
@@ -66,6 +68,14 @@ function PakNet.Mount(_: types.PakNet, file: Instance, RemoteTable: types.Remote
 	return remotes
 end
 
+--[=[
+	@method DefineRemote
+	@within PakNet
+	@param settings: RemoteSettings
+	@return Server | Client
+
+	Defines a remote from a RemoteSettings table.
+]=]
 function PakNet.DefineRemote<T, V, U..., W...>(_: types.PakNet, settings: types.RemoteSettings<T, V, U..., W...>): types.Remote<T, V, U..., W...>
 	-- Simply remaps the settings class to a Remote type for later type inference
 	return settings :: any

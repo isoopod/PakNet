@@ -19,7 +19,7 @@ local types = require(script.Parent.types)
 -- These defaults seem to work reasonably well, but may be tweaked later down the line.
 local SHORT_WINDOW_TOLERANCE = 2 -- Any window shorter than this number is defined as short
 local WINDOW_ADJUSTMENT = 0.9 -- Modifier to window length on server, if the window is short
-local LIMIT_ADJUSTMENMT = 1.1 -- Modifier to limit size on the server, if the window is not short
+local LIMIT_ADJUSTMENT = 1.1 -- Modifier to limit size on the server, if the window is not short
 
 -- I might also implement an alternative leaky bucket rate limit so people can choose between the two
 
@@ -118,7 +118,7 @@ function RateLimitClass.new(settings: types.RateLimitSettings): RateLimit
 		if self.window < SHORT_WINDOW_TOLERANCE then
 			self.window *= WINDOW_ADJUSTMENT
 		else
-			self.limit = math.ceil(self.limit * LIMIT_ADJUSTMENMT)
+			self.limit = math.ceil(self.limit * LIMIT_ADJUSTMENT)
 		end
 	end
 

@@ -17,7 +17,7 @@ PakNet:Mount(file: Instance, namespace: RemoteTable)
 - **namespace**: A table that holds the remote definitions.
 
 :::warning
-Do not mount multiple namespaces to the same file. This can cause name collisions and break everything—even if the namespaces don't overlap.
+Do not mount multiple namespaces to the same file. This can cause name collisions and break everything — even if the namespaces don't overlap.
 :::
 
 ### Organizational Tips:
@@ -114,10 +114,10 @@ return namespace
 ```
 
 :::tip
-When defining a tuple Schema (one with multiple arguments), you have to assert the type as PakNet.Schema<...>
+When defining a tuple Schema (one with multiple arguments), you have to assert the type as `PakNet.Schema<...>`
 
 When you have complicated data structures, it can be annoying to convert them into standard types.   
-You can copy the definition inside the function and surround it in typeof() instead of writing it out with types as well.
+You can copy the definition inside the function and surround it in `typeof()` instead of writing it out with types as well.
 
 ```lua
  params = PakNet:Schema(PakNet.Dictionary({
@@ -126,7 +126,7 @@ You can copy the definition inside the function and surround it in typeof() inst
 }, PakNet.Int)) :: PakNet.Schema<typeof(PakNet.Dictionary({
     Name = PakNet.string16,
     Level = PakNet.UByte,
-}), number>
+}), typeof(PakNet.Int)>
 ```
 :::
 
