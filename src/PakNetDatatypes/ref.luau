@@ -2,7 +2,7 @@
 --!native
 --!optimize 2
 
-local types = require(script.Parent.Parent.Parent._Index["isoopod_pack@0.2.0"].pack.Types) -- TODO: Export needed Pack types for external datatypes
+local types = require(script.Parent.Parent.Parent._Index["isoopod_pack@0.2.1"].pack.types) -- TODO: Export needed Pack types for external datatypes
 
 -- I want to avoid using pack.custom here as it adds a wrapper layer that may very slightly impact speed
 

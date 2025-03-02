@@ -3,10 +3,9 @@
 
 -- Services
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Modules
-local LemonSignal = require(ReplicatedStorage.Packages.lemonsignal)
-local Promise = require(ReplicatedStorage.Packages["typed-promise"])
+local LemonSignal = require(script.Parent.Parent.lemonsignal)
+local Promise = require(script.Parent.Parent["typed-promise"])
 local Ratelimit = require(script.Parent.Ratelimit)
 local types = require(script.Parent.types)
 

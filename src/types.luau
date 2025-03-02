@@ -1,8 +1,8 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+--!strict
 
-local LemonSignal = require(ReplicatedStorage.Packages.lemonsignal)
-local Pack = require(ReplicatedStorage.Packages.pack)
-local Promise = require(ReplicatedStorage.Packages["typed-promise"])
+local LemonSignal = require(script.Parent.Parent.lemonsignal)
+local Pack = require(script.Parent.Parent.pack)
+local Promise = require(script.Parent.Parent["typed-promise"])
 
 export type ManualTuple<T, U...> = Pack.ManualTuple<T, U...>
 
@@ -87,7 +87,7 @@ export type RemoteSettings<T, V, U..., W...> = {
 }
 
 export type RemoteTable = {
-	[string]: RemoteSettings,
+	[string]: RemoteSettings<any, any, ...any, ...any>,
 }
 
 export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteEvent? }
@@ -196,15 +196,15 @@ export type PakNet = {
 	read Vector2int16: Vector2,
 	read Region3: Region3,
 	read Region3int16: Region3int16,
-	read UDim: Udim,
+	read UDim: UDim,
 	read UDim2: UDim2,
 
 	read DateTime: DateTime,
 	read EnumItem: EnumItem,
 	read Instance: Instance,
 
-	read custom: <T>(read: (Reader) -> T, write: (Writer, T) -> ()) -> T,
-	read object: <T, U>(metatable: T, classData: U) -> typeof(setmetatable({} :: U, {} :: T)),
+	read custom: typeof(Pack.custom),
+	read object: <T, U>(metatable: T, classData: U) -> setmetatable<U, T>,
 
 	read Array: <T>(type: T) -> { T },
 	read Dictionary: <T>(format: T) -> T,
