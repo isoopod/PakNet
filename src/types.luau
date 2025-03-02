@@ -97,6 +97,7 @@ export type Server<T, V, U..., W...> = {
 
 	read onEvent: LemonSignal.Signal<(Player, T, U...)>,
 	read onRateLimited: LemonSignal.Signal<Player>,
+	read onParseError: LemonSignal.Signal<Player, string>,
 	onInvoke: ((player: Player, T, U...) -> (V, W...))?,
 
 	Fire: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (),

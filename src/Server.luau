@@ -16,6 +16,7 @@ local ServerClass = { metatable = { __index = Server } }
 type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 	onEvent: LemonSignal.Signal<(Player, T, U...)> | { _head: any? }, -- Public is marked read only
 	onRateLimited: LemonSignal.Signal<Player>,
+	onParseError: LemonSignal.Signal<Player, string>,
 
 	_events: types.Events,
 	_params: types.ManualTuple<T, U...>,
@@ -289,28 +290,55 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	self._returns = settings.returns
 	self._timeout = settings.timeout
 
+	--- @external Signal https://data-oriented-house.github.io/LemonSignal/classes/signal.html
+	--- @prop onEvent Signal
+	--- A signal that fires when a Remote is fired with FireServer or FireServerUnreliable from the client
 	if self._events.r or self._events.u then self.onEvent = LemonSignal.new() end
+
+	--- @prop onRateLimited Signal
+	--- A signal that fires when the server-side ratelimit rejects a packet. Sends the player that tripped the ratelimit (even if global).
+	--- This can be a sign of tampering, but there may still be cases where flucuations in network latency cause false positives.
+	--- The server rate limit is adjusted to be slightly less strict than the client rate limit to compensate for this.
 	self.onRateLimited = LemonSignal.new()
+
+	--- @prop onParseError Signal
+	--- A signal that fires when parsing an incoming packet errors. Sends the player that caused the parse error, followed by the error.
+	--- If this happens, it means either a client is tampering with something or you have an issue with your remotes on the client side.
+	--- I would recommend
+	self.onParseError = LemonSignal.new()
 
 	if settings.rateLimit then self._ratelimit = Ratelimit.new(settings.rateLimit) end
 
+	local function parsePacket(player, buff, refs): ...any
+		local s, result = pcall(function()
+			return self._params:Read(buff, refs)
+		end)
+
+		if not s then
+			self.onParseError:Fire(player, result)
+			error(`Parse error for {player}: {result}`)
+		end
+
+		return unpack(result)
+	end
+
 	if self._events.f then
 		self._events.f.OnServerInvoke = function(player: Player, buff, refs)
-			if self.onInvoke and not self:_RateLimited(player) then return self.onInvoke(player, self._params:Read(buff, refs)) end
+			if self.onInvoke and not self:_RateLimited(player) then return self.onInvoke(player, parsePacket(player, buff, refs)) end
 			return nil :: any
 		end
 	end
 	if self._events.r then
 		self._events.r.OnServerEvent:Connect(function(player, buff, refs)
 			if self.onEvent._head and not self:_RateLimited(player) then -- Check there are any connections and if we are rate limited
-				self.onEvent:Fire(player, self._params:Read(buff, refs))
+				self.onEvent:Fire(player, parsePacket(player, buff, refs))
 			end
 		end)
 	end
 	if self._events.u then
 		self._events.u.OnServerEvent:Connect(function(player, buff, refs)
 			if self.onEvent._head and not self:_RateLimited(player) then -- Check there are any connections and if we are rate limited
-				self.onEvent:Fire(player, self._params:Read(buff, refs))
+				self.onEvent:Fire(player, parsePacket(player, buff, refs))
 			end
 		end)
 	end
