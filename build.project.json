@@ -1,0 +1,13 @@
+{
+  "name": "PakNet",
+  "tree": {
+    "$path": "Packages",
+    "paknet": {
+      "$path": "src"
+    },
+    "$className": "ModuleScript",
+    "$properties": {
+      "Source": "local REQUIRED_MODULE = require(script.paknet)\n\nreturn REQUIRED_MODULE -- TODO: Export types"
+    }
+  }
+}
