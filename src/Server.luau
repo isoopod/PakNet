@@ -14,9 +14,9 @@ local Server = {}
 local ServerClass = { metatable = { __index = Server } }
 
 type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
-	onEvent: LemonSignal.Signal<(Player, T, U...)> | { _head: any? }, -- Public is marked read only
-	onRateLimited: LemonSignal.Signal<Player>,
-	onParseError: LemonSignal.Signal<Player, string>,
+	OnEvent: LemonSignal.Signal<(Player, T, U...)> | { _head: any? }, -- Public is marked read only
+	OnRateLimited: LemonSignal.Signal<Player>,
+	OnParseError: LemonSignal.Signal<Player, string>,
 
 	_events: types.Events,
 	_params: types.ManualTuple<T, U...>,
@@ -32,7 +32,7 @@ Server.ClassName = "Server"
 function Server._RateLimited<T, V, U..., W...>(self: _Server<T, V, U..., W...>, player: Player): boolean
 	if self._ratelimit then
 		local ratelimited = not self._ratelimit:RequestAllowed(player)
-		if ratelimited then self.onRateLimited:Fire(player) end
+		if ratelimited then self.OnRateLimited:Fire(player) end
 		return ratelimited
 	end
 	return false
@@ -48,7 +48,7 @@ function Server.Fire<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Play
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
 
-	self._events.r:FireClient(to, packet, --[[>>> Can be simplified next Pack Update]] #refs > 0 and refs or nil)
+	self._events.r:FireClient(to, packet, refs)
 end
 
 --- @method FireAll
@@ -103,7 +103,7 @@ function Server.FireUnreliable<T, V, U..., W...>(self: _Server<T, V, U..., W...>
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding unreliable packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
 
-	self._events.u:FireClient(to, packet, --[[>>> Can be simplified next Pack Update]] #refs > 0 and refs or nil)
+	self._events.u:FireClient(to, packet, refs)
 end
 
 --[=[
@@ -193,7 +193,7 @@ function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Pl
 	local invokeThread: thread, timeoutThread: thread
 
 	invokeThread = task.spawn(function()
-		result = { self._events.f:InvokeClient(to, packet, #refs > 0 and refs or nil) }
+		result = { self._events.f:InvokeClient(to, packet, refs) }
 		pcall(task.cancel, timeoutThread)
 		finished = true
 		task.spawn(thread)
@@ -228,7 +228,6 @@ end
 	@within Server
 	@param to Player
 	@param args ..any -- The arguments tuple specified by the params schema
-	@external Promise https://eryn.io/roblox-lua-promise/api/Promise
 	@return Promise
 
 	Asynchronous variant of Invoke that does not block the calling thread, and instead returns a Promise  
@@ -261,7 +260,7 @@ function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, t
 
 		-- Invoke the client
 		invokeThread = task.spawn(function()
-			local result = { self._events.f:InvokeClient(to, packet, #refs > 0 and refs or nil) }
+			local result = { self._events.f:InvokeClient(to, packet, refs) }
 			pcall(task.cancel, timeoutThread)
 			resolve(table.unpack(result))
 		end)
@@ -282,6 +281,8 @@ function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, t
 end
 
 --- @class Server
+--- @external Signal https://data-oriented-house.github.io/LemonSignal/classes/signal.html
+--- @external Promise https://eryn.io/roblox-lua-promise/api/Promise
 function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types.RemoteSettings<T, V, U..., W...>): types.Server<T, V, U..., W...>
 	local self: _Server<T, V, U..., W...> = setmetatable({}, ServerClass.metatable) :: any
 
@@ -290,22 +291,30 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	self._returns = settings.returns
 	self._timeout = settings.timeout
 
-	--- @external Signal https://data-oriented-house.github.io/LemonSignal/classes/signal.html
-	--- @prop onEvent Signal
-	--- A signal that fires when a Remote is fired with FireServer or FireServerUnreliable from the client
-	if self._events.r or self._events.u then self.onEvent = LemonSignal.new() end
+	--[=[
+		@prop onEvent Signal
+		@within Server
+		A signal that fires when a Remote is fired with FireServer or FireServerUnreliable from the client
+		if self._events.r or self._events.u then self.onEvent = LemonSignal.new() end
+	]=]
 
-	--- @prop onRateLimited Signal
-	--- A signal that fires when the server-side ratelimit rejects a packet. Sends the player that tripped the ratelimit (even if global).
-	--- This can be a sign of tampering, but there may still be cases where flucuations in network latency cause false positives.
-	--- The server rate limit is adjusted to be slightly less strict than the client rate limit to compensate for this.
-	self.onRateLimited = LemonSignal.new()
+	--[=[
+		@prop onRateLimited Signal
+		@within Server
+		A signal that fires when the server-side ratelimit rejects a packet. Sends the player that tripped the ratelimit (even if global).
+		This can be a sign of tampering, but there may still be cases where flucuations in network latency cause false positives.
+		The server rate limit is adjusted to be slightly less strict than the client rate limit to compensate for this.
+	]=]
+	self.OnRateLimited = LemonSignal.new()
 
-	--- @prop onParseError Signal
-	--- A signal that fires when parsing an incoming packet errors. Sends the player that caused the parse error, followed by the error.
-	--- If this happens, it means either a client is tampering with something or you have an issue with your remotes on the client side.
-	--- I would recommend
-	self.onParseError = LemonSignal.new()
+	--[=[
+		@prop onParseError Signal
+		@within Server
+		A signal that fires when parsing an incoming packet errors. Sends the player that caused the parse error, followed by the error.
+		If this happens, it means either a client is tampering with something or you have an issue with your remotes on the client side.
+		I would recommend
+	]=]
+	self.OnParseError = LemonSignal.new()
 
 	if settings.rateLimit then self._ratelimit = Ratelimit.new(settings.rateLimit) end
 
@@ -315,7 +324,7 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 		end)
 
 		if not s then
-			self.onParseError:Fire(player, result)
+			self.OnParseError:Fire(player, result)
 			error(`Parse error for {player}: {result}`)
 		end
 
@@ -324,21 +333,21 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 
 	if self._events.f then
 		self._events.f.OnServerInvoke = function(player: Player, buff, refs)
-			if self.onInvoke and not self:_RateLimited(player) then return self.onInvoke(player, parsePacket(player, buff, refs)) end
+			if self.OnInvoke and not self:_RateLimited(player) then return self.OnInvoke(player, parsePacket(player, buff, refs)) end
 			return nil :: any
 		end
 	end
 	if self._events.r then
 		self._events.r.OnServerEvent:Connect(function(player, buff, refs)
-			if self.onEvent._head and not self:_RateLimited(player) then -- Check there are any connections and if we are rate limited
-				self.onEvent:Fire(player, parsePacket(player, buff, refs))
+			if self.OnEvent._head and not self:_RateLimited(player) then -- Check there are any connections and if we are rate limited
+				self.OnEvent:Fire(player, parsePacket(player, buff, refs))
 			end
 		end)
 	end
 	if self._events.u then
 		self._events.u.OnServerEvent:Connect(function(player, buff, refs)
-			if self.onEvent._head and not self:_RateLimited(player) then -- Check there are any connections and if we are rate limited
-				self.onEvent:Fire(player, parsePacket(player, buff, refs))
+			if self.OnEvent._head and not self:_RateLimited(player) then -- Check there are any connections and if we are rate limited
+				self.OnEvent:Fire(player, parsePacket(player, buff, refs))
 			end
 		end)
 	end

@@ -13,8 +13,8 @@ local Client = {}
 local ClientClass = { metatable = { __index = Client } }
 
 type _Client<T, V, U..., W...> = types.Client<T, V, U..., W...> & {
-	onClientEvent: LemonSignal.Signal<(T, U...)> | { _head: any? }, -- Public is marked read only
-	onRateLimited: LemonSignal.Signal<>,
+	OnClientEvent: LemonSignal.Signal<(T, U...)> | { _head: any? }, -- Public is marked read only
+	OnRateLimited: LemonSignal.Signal<>,
 
 	_events: types.Events,
 	_params: types.ManualTuple<T, U...>,
@@ -30,7 +30,7 @@ Client.ClassName = "Client"
 function Client._RateLimited<T, V, U..., W...>(self: _Client<T, V, U..., W...>): boolean
 	if self._ratelimit then
 		local ratelimited = not self._ratelimit:RequestAllowed()
-		if ratelimited then self.onRateLimited:Fire() end
+		if ratelimited then self.OnRateLimited:Fire() end
 		return ratelimited
 	end
 	return false
@@ -47,7 +47,7 @@ function Client.FireServer<T, V, U..., W...>(self: _Client<T, V, U..., W...>, v1
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
 
-	self._events.r:FireServer(packet, --[[>>> Can be simplified next Pack Update]] #refs > 0 and refs or nil)
+	self._events.r:FireServer(packet, refs)
 end
 
 --[=[
@@ -69,7 +69,7 @@ function Client.FireServerUnreliable<T, V, U..., W...>(self: _Client<T, V, U...,
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding unreliable packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
 
-	self._events.u:FireServer(packet, --[[>>> Can be simplified next Pack Update]] #refs > 0 and refs or nil)
+	self._events.u:FireServer(packet, refs)
 end
 
 --[=[
@@ -98,7 +98,7 @@ function Client.InvokeServer<T, V, U..., W...>(self: _Client<T, V, U..., W...>, 
 	local invokeThread: thread, timeoutThread: thread
 
 	invokeThread = task.spawn(function()
-		result = { self._events.f:InvokeServer(packet, #refs > 0 and refs or nil) }
+		result = { self._events.f:InvokeServer(packet, refs) }
 		pcall(task.cancel, timeoutThread)
 		finished = true
 		task.spawn(thread)
@@ -131,7 +131,6 @@ end
 	@method InvokeServerAsync
 	@within Client
 	@param args ..any -- The arguments tuple specified by the params schema
-	@external Promise https://eryn.io/roblox-lua-promise/api/Promise
 	@return Promise
 
 	Asynchronous variant of InvokeServer that does not block the calling thread, and instead returns a Promise  
@@ -166,7 +165,7 @@ function Client.InvokeServerAsync<T, V, U..., W...>(self: _Client<T, V, U..., W.
 
 		-- Invoke the client
 		invokeThread = task.spawn(function()
-			local result = { self._events.f:InvokeServer(packet, #refs > 0 and refs or nil) }
+			local result = { self._events.f:InvokeServer(packet, refs) }
 			pcall(task.cancel, timeoutThread)
 			resolve(table.unpack(result))
 		end)
@@ -195,8 +194,8 @@ function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	self._returns = settings.returns
 	self._timeout = settings.timeout
 
-	if self._events.r or self._events.u then self.onClientEvent = LemonSignal.new() end
-	self.onRateLimited = LemonSignal.new()
+	if self._events.r or self._events.u then self.OnClientEvent = LemonSignal.new() :: any end
+	self.OnRateLimited = LemonSignal.new()
 
 	if settings.rateLimit then
 		settings.rateLimit.global = true -- Always treat as global on client
@@ -205,21 +204,21 @@ function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types
 
 	if self._events.f then
 		self._events.f.OnClientInvoke = function(buff, refs)
-			if self.onClientInvoke then return self.onClientInvoke(self._params:Read(buff, refs)) end
+			if self.OnClientInvoke then return self.OnClientInvoke(self._params:Read(buff, refs)) end
 			return nil :: any
 		end
 	end
 	if self._events.r then
 		self._events.r.OnClientEvent:Connect(function(buff, refs)
-			if self.onClientEvent._head then -- Check there are any connections and if we are rate limited
-				self.onClientEvent:Fire(self._params:Read(buff, refs))
+			if self.OnClientEvent._head then -- Check there are any connections and if we are rate limited
+				self.OnClientEvent:Fire(self._params:Read(buff, refs))
 			end
 		end)
 	end
 	if self._events.u then
 		self._events.u.OnClientEvent:Connect(function(buff, refs)
-			if self.onClientEvent._head then -- Check there are any connections and if we are rate limited
-				self.onClientEvent:Fire(self._params:Read(buff, refs))
+			if self.OnClientEvent._head then -- Check there are any connections and if we are rate limited
+				self.OnClientEvent:Fire(self._params:Read(buff, refs))
 			end
 		end)
 	end
