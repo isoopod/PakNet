@@ -3,29 +3,50 @@ sidebar_position: 3
 ---
 
 # Usage
-## Creating Remotes
-To create remotes using PakNet, you will create network modules somewhere in ReplicatedStorage. These modules return a mounted namespace of remotes.
 
-You can mount a namespace using `PakNet:Mount(file: Instance, namespace: RemoteTable)` where file is the Instance the needed instances will be created inside  
+In PakNet, creating remotes involves setting up network modules within `ReplicatedStorage`. These modules return a mounted namespace of remotes that can be accessed and used in your game.
+
+### Creating Remotes
+To create remotes, you'll need to use the `PakNet:Mount` function. This function mounts a remote namespace, where each remote is a key-value pair that represents a remote definition.
+
+```lua
+PakNet:Mount(file: Instance, namespace: RemoteTable)
+```
+
+- **file**: The `Instance` where remote instances will be created (usually `script`).
+- **namespace**: A table that holds the remote definitions.
+
 :::warning
-You should not mount multiple namespaces to the same file, as this can result in name collisions and break everything (even if both namespaces have no overlapping keys).
-:::  
+Do not mount multiple namespaces to the same file. This can cause name collisions and break everything—even if the namespaces don't overlap.
+:::
 
-Typically, you will mount directly to the current script, but if you want to create multiple namespaces in one script for organizational purposes, you can use create folders under the module for each namespace and mount to them.
+### Organizational Tips:
+- Typically, you'll mount the remote directly to the current script.
+- If you want to create multiple namespaces within a single script for better organization, create folders under the module for each namespace and mount to those.
 
-The remote table format is a map of strings as names to a remote definition using `PakNet:DefineRemote(settings: RemoteSettings)`  
-RemoteSettings is a dictionary where:
-    - **params** *(always required)* is a PakNet Schema
-    - **returns** *(only required for remote functions)* is also a PakNet Schema
-    - **remoteType** *(always required)* is any of **"f" "r" "u" "fr" "fu" "ru" "fru"** so that:
-        - Containing **f** means it has a RemoteFunction
-        - Containing **r** means it has a RemoteEvent
-        - Containing **u** means it has an UnreliableRemoteEvent
-    - **rateLimit** *(optional)* is a table where:
-        - **global** is a boolean indicating if it should be per-player (false) or global (true)
-        - **limit** is the maximum amount of requests within the window
-        - **window** is the duration of the window (so that only requests from the past `window` seconds are counted towards the limit)
-    - **timeout** *(optional)* is a number for when invocations should timeout for remote functions.
+### Defining Remotes
+A remote table is essentially a map where each key is the remote name, and the value is the remote's definition. To define a remote, use:
+
+```lua
+PakNet:DefineRemote(settings: RemoteSettings)
+```
+
+The `RemoteSettings` is a dictionary with the following fields:
+
+- **params** *(required)*: A PakNet schema that defines the parameters for the remote.
+- **returns** *(required for remote functions only)*: A PakNet schema that defines the return values for the remote function.
+- **remoteType** *(required)*: Specifies the type of remote. It can be any combination of the following:
+  - **"f"**: RemoteFunction
+  - **"r"**: RemoteEvent
+  - **"u"**: UnreliableRemoteEvent
+  - Combinations like **"fr"**, **"fu"**, **"ru"**, and **"fru"** can also be used for remotes that have multiple types (e.g., a remote that is both a RemoteFunction and a RemoteEvent, also note that it is always written in alphabetical order).
+
+- **rateLimit** *(optional)*: A table that specifies rate limiting for the remote.
+  - **global**: Boolean indicating whether the rate limit applies globally or per player.
+  - **limit**: The maximum number of requests allowed within a specified window.
+  - **window**: The duration in seconds that defines the rate limit window.
+
+- **timeout** *(optional)*: A number specifying the timeout duration (in seconds) for remote functions.
 
 ```lua title="networkExample.luau"
 local PakNet = require(path.to.PakNet)
@@ -95,15 +116,42 @@ return namespace
 How you organize namespaces is up to you. You might want to create a centralized network module with all remotes inside it, or you might want to create multiple network modules for different things.
 
 ## Using Remotes
-Remotes share a similar API to the standard Roblox remotes, however, their API's have been combined into one. The names of server methods and events have also been changed to remove Server/Client, so for example `FireClient` is just `Fire` and `OnServerEvent` is now `OnEvent`. The names on the client remain the same.  
-PakNet also introduces some new functionality, Server remotes get built in `FireList` and `FireExcept` variants, as well as an event that fires if an incoming packet failed to deserialize called `OnParseError`. Both Client and Server get `InvokeAsync` (`InvokeServerAsync` on client), a non-blocking version of `Invoke` that returns a Promise. Both also get the `OnRateLimited` event, which will also return the player that was rate limited on the server.  
-There are Unreliable variants of all the Fire methods, which will use a UnreliableRemoteEvent instead of a RemoteEvent.
 
-With this combined API, the parts of it you can use depend on the current RunContext (Server or Client) and the current remote's remoteType.  
-"f" unlocks the `OnInvoke` / `OnClientInvoke` callback, `Invoke`, `InvokeAsync`, `InvokeServer`, and `InvokeServerAsync`  
-"r" unlocks the `OnEvent` / `OnClientEvent` signal, `Fire`, `FireAll`, `FireList`, `FireExcept`, and `FireServer`  
-"u" unlocks the `OnEvent` / `OnClientEvent` signal, `FireUnreliable`, `FireAllUnreliable`, `FireListUnreliable`, `FireExceptUnreliable`, and `FireServerUnreliable`  
-The server always has access to the `OnParseError` signal. Both server and client always have access to `OnRateLimited` and `ClassName` (with ClassName being "Server" or "Client").
+Remotes in PakNet have a unified API that combines both server and client functionality. Some changes have been made to the API to simplify naming conventions and add new features.
+
+### Key Changes:
+- **Unified API**: Server and client remote methods are combined. For example:
+  - `FireClient` is now just `Fire`.
+  - `OnServerEvent` is now `OnEvent`.
+  
+  The names on the client side remain the same.
+
+- **New Features**:
+  - **Server-only methods**: 
+    - `FireList` and `FireExcept`: Variants of the `Fire` method.
+    - `OnParseError`: Fires when an incoming packet fails to deserialize.
+  - **Async Methods**: Both server and client have:
+    - `InvokeAsync` (on the client, it's called `InvokeServerAsync`): A non-blocking version of `Invoke` that returns a Promise.
+  - **Rate Limiting**:
+    - `OnRateLimited` event: Triggers when a player is rate-limited, and the server will receive the player object.
+  
+- **Unreliable Variants**: All `Fire` methods have unreliable variants that use a `UnreliableRemoteEvent` instead of a `RemoteEvent`.
+
+### Access Based on Remote Type:
+The parts of the API you can use depend on whether you’re on the server or client and the remote's type. Here’s a breakdown:
+
+- **"f" (Functions)**: 
+  - Unlocks `OnInvoke`, `OnClientInvoke`, `Invoke`, `InvokeAsync`, `InvokeServer`, and `InvokeServerAsync`.
+  
+- **"r" (Remote)**: 
+  - Unlocks `OnEvent`, `OnClientEvent`, `Fire`, `FireAll`, `FireList`, `FireExcept`, and `FireServer`.
+  
+- **"u" (Unreliable)**: 
+  - Unlocks `OnEvent`, `OnClientEvent`, `FireUnreliable`, `FireAllUnreliable`, `FireListUnreliable`, `FireExceptUnreliable`, and `FireServerUnreliable`.
+
+### Common Access:
+- **Server** always has access to the `OnParseError` event.
+- **Both server and client** always have access to the `OnRateLimited` event and the `ClassName` property (which indicates whether the current context is "Server" or "Client").
 
 ```lua title="ClientExample.luau"
 local network = require(game:GetService("ReplicatedStorage"):WaitForChild("networkExample"))
