@@ -19,6 +19,8 @@ jobs:
         with:
           node-version: "22"
       - run: npm i -g moonwave@latest
+      - name: Set NODE_OPTIONS to disable experimental require()
+        run: echo "NODE_OPTIONS=--no-experimental-require-module" >> $GITHUB_ENV
       - name: Publish
         run: |
           git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
