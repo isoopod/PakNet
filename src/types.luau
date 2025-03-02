@@ -92,13 +92,25 @@ export type RemoteTable = {
 
 export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteEvent? }
 
+-- Fork the Signal type to force Connect and Once to use T... for the fn args instead of any...
+export type Signal<T...> = {
+	RBXScriptConnection: RBXScriptConnection?,
+
+	Connect: <U...>(self: Signal<T...>, fn: (T...) -> (), U...) -> LemonSignal.Connection<U...>,
+	Once: <U...>(self: Signal<T...>, fn: (T...) -> (), U...) -> LemonSignal.Connection<U...>,
+	Wait: (self: Signal<T...>) -> T...,
+	Fire: (self: Signal<T...>, T...) -> (),
+	DisconnectAll: (self: Signal<T...>) -> (),
+	Destroy: (self: Signal<T...>) -> (),
+}
+
 export type Server<T, V, U..., W...> = {
 	read ClassName: "Server",
 
-	read onEvent: LemonSignal.Signal<(Player, T, U...)>,
-	read onRateLimited: LemonSignal.Signal<Player>,
-	read onParseError: LemonSignal.Signal<Player, string>,
-	onInvoke: ((player: Player, T, U...) -> (V, W...))?,
+	read OnEvent: Signal<(Player, T, U...)>,
+	read OnRateLimited: Signal<Player>,
+	read OnParseError: Signal<Player, string>,
+	OnInvoke: ((player: Player, T, U...) -> (V, W...))?,
 
 	Fire: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (),
 	FireAll: (self: Server<T, V, U..., W...>, T, U...) -> (),
@@ -117,9 +129,9 @@ export type Server<T, V, U..., W...> = {
 export type Client<T, V, U..., W...> = {
 	read ClassName: "Client",
 
-	read onClientEvent: LemonSignal.Signal<(T, U...)>,
-	read onRateLimited: LemonSignal.Signal<>,
-	onClientInvoke: ((T, U...) -> (V, W...))?,
+	read OnClientEvent: Signal<(T, U...)>,
+	read OnRateLimited: Signal<>,
+	OnClientInvoke: ((T, U...) -> (V, W...))?,
 
 	FireServer: (self: Client<T, V, U..., W...>, T, U...) -> (),
 

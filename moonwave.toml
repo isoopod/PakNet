@@ -1,0 +1,17 @@
+gitSourceBranch = "main"
+
+[home]
+enabled = true
+includeReadme  = true
+
+[[home.features]]
+title = "Efficient packet encoding"
+description = "PakNet offers unparalleled serialization efficiency thanks to it's smart use of Schemas. This saves on network bandwidth compared to the built-in Roblox serialization. PakNet supports many datatypes and structures, making it much easier to represent complex information."
+
+[[home.features]]
+title = "Versatile API"
+description = "PakNet has a simple yet versatile API for creating and using remotes. Remotes have a similar API to default RemoteEvents. PakNet also fixes RemoteFunctions by making timeouts simple and providing a promisified Invoke method."
+
+[[home.features]]
+title = "Exploit resistant"
+description = "PakNet makes it easier to combat exploiters by ensuring remotes follow the schema, and providing server-side events that can be used to identify network tampering. PakNet also makes it difficult to use tools like RemoteSpy by cryptographically hashing the names of remotes and using a binary format."
