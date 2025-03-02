@@ -98,7 +98,7 @@ local object = setmetatable({
 	-- Redirects some datatype lookups that would go to Pack to PakNet specific datatypes
 	-- These don't need to be lazy-loaded, as PakNet is probably only going to be used on the main thread
 	_redirects = {
-		Instance = require(script.PakNetDatatypes.ref),
+		Instance = require(script.PakNetDatatypes.instance),
 		ref = require(script.PakNetDatatypes.ref),
 		-- We will keep the default behaviour of 'any' once implemented in Pack, and explain the difference between any and ref in the PakNet documentation
 	},
