@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[91],{4410:e=>{e.exports=JSON.parse('{"sourceUrl":"https://github.com/isoopod/PakNet/blob/main","baseUrl":"/PakNet/","classOrder":["PakNet","RemoteSettings","Server","Client"],"apiCategories":[]}')}}]);
