@@ -9,6 +9,10 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+permissions:
+  contents: write
+  pages: write 
+
 jobs:
   status:
     runs-on: ubuntu-latest
