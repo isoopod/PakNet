@@ -1,13 +1,27 @@
 --!strict
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+--!optimize 2
+--!native
 
 --[[ RateLimit
-Sliding window rate-limit applied on server and client
+	Sliding window ratelimit applied on server and client.
+
+	The limit is made slightly less strict on the server to account for slight fluctuations in latency that could cause false positives.
 --]]
 
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 -- Modules
 local types = require(script.Parent.types)
+
+-- In future I will probably expose these in a configuration file (probably just gonna expand the pack config shared table)
+-- Alternative is making them per remote in the RateLimitSettings (maybe use config table for defaults but use ones in remote settings if provided)
+-- These defaults seem to work reasonably well, but may be tweaked later down the line.
+local SHORT_WINDOW_TOLERANCE = 2 -- Any window shorter than this number is defined as short
+local WINDOW_ADJUSTMENT = 0.9 -- Modifier to window length on server, if the window is short
+local LIMIT_ADJUSTMENMT = 1.1 -- Modifier to limit size on the server, if the window is not short
+
+-- I might also implement an alternative leaky bucket rate limit so people can choose between the two
 
 local RateLimit = {}
 local RateLimitClass = { metatable = { __index = RateLimit } }
@@ -97,6 +111,15 @@ function RateLimitClass.new(settings: types.RateLimitSettings): RateLimit
 		end) end
 	else
 		self._globalRequests = {}
+	end
+
+	if RunService:IsServer() then
+		-- The ratelimit needs to be slightly less strict on the server to account for slight fluctuations in network latency
+		if self.window < SHORT_WINDOW_TOLERANCE then
+			self.window *= WINDOW_ADJUSTMENT
+		else
+			self.limit = math.ceil(self.limit * LIMIT_ADJUSTMENMT)
+		end
 	end
 
 	return self
