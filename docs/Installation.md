@@ -3,8 +3,8 @@ sidebar_position: 2
 ---
 
 # Installation
-PakNet was made with the new luau type solver, so there will be many type errors if you are not using it.  
-You can enable the new solver in beta features for studio and in luau-lsp settings for external editors. 
+PakNet was made with the new luau type solver, so there will be type errors if you are not using it.  
+The new type solver can be enabled from beta features for studio and in luau-lsp settings for external editors. 
 
 ## Wally
 Get the latest version of PakNet from [wally.run](https://wally.run/package/isoopod/paknet) and add it to your wally.toml

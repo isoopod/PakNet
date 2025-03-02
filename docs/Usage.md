@@ -113,6 +113,23 @@ namespace.Signal = PakNet.Signal
 return namespace
 ```
 
+:::tip
+When defining a tuple Schema (one with multiple arguments), you have to assert the type as PakNet.Schema<...>
+
+When you have complicated data structures, it can be annoying to convert them into standard types.   
+You can copy the definition inside the function and surround it in typeof() instead of writing it out with types as well.
+
+```lua
+ params = PakNet:Schema(PakNet.Dictionary({
+    Name = PakNet.string16,
+    Level = PakNet.UByte,
+}, PakNet.Int)) :: PakNet.Schema<typeof(PakNet.Dictionary({
+    Name = PakNet.string16,
+    Level = PakNet.UByte,
+}), number>
+```
+:::
+
 How you organize namespaces is up to you. You might want to create a centralized network module with all remotes inside it, or you might want to create multiple network modules for different things.
 
 ## Using Remotes
