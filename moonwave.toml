@@ -1,3 +1,10 @@
+classOrder = [
+    "PakNet",
+    "RemoteSettings",
+    "Server",
+    "Client"
+]
+
 gitSourceBranch = "main"
 
 [home]
