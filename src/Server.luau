@@ -18,8 +18,8 @@ type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 	OnParseError: LemonSignal.Signal<Player, string>,
 
 	_events: types.Events,
-	_params: types.ManualTuple<T, U...>,
-	_returns: types.ManualTuple<V, W...>?,
+	_params: types.Schema<T, U...>,
+	_returns: types.Schema<V, W...>?,
 	_timeout: number?,
 	_ratelimit: Ratelimit.RateLimit?,
 

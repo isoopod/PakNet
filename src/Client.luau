@@ -15,8 +15,8 @@ type _Client<T, V, U..., W...> = types.Client<T, V, U..., W...> & {
 	OnRateLimited: LemonSignal.Signal<>,
 
 	_events: types.Events,
-	_params: types.ManualTuple<T, U...>,
-	_returns: types.ManualTuple<V, W...>?,
+	_params: types.Schema<T, U...>,
+	_returns: types.Schema<V, W...>?,
 	_timeout: number?,
 	_ratelimit: Ratelimit.RateLimit?,
 

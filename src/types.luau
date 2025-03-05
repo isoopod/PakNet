@@ -4,7 +4,7 @@ local LemonSignal = require(script.Parent.Parent.lemonsignal)
 local Pack = require(script.Parent.Parent.pack)
 local Promise = require(script.Parent.Parent["typed-promise"])
 
-export type ManualTuple<T, U...> = Pack.ManualTuple<T, U...>
+export type Schema<T, U...> = Pack.Schema<T, U...>
 
 --[=[
 	@type RemoteType "f" | "r" | "u" | "fr" | "fu" | "fru"
@@ -53,12 +53,12 @@ export type RateLimitSettings = {
 	Provides the structure for creating a Remote in PakNet. These will be created with `PakNet.defineRemote` in the RemoteTable when creating a namespace with `PakNet.mount`
 
 	params and returns (returns are only needed if the function RemoteType is active) are Pack Schemas created with `PakNet.schema`  
-	If making use of the tuple support, you will need to assert the type of this to `PakNet.ManualTuple<arg1, (...vararg)>`, as only the first arg can be infered.
+	If making use of the tuple support, you will need to assert the type of this to `PakNet.Schema<arg1, (...vararg)>`, as only the first arg can be infered.
 	timeout is how long the server will wait when invoking the client. If a value is not return before timeout, the request will be dropped and return nil. 
 
 	:::tip
 	Schemas are tuples, however because of luau limitations meaning higer-level polymorphism is not possible right now, only the first argument will be properly typed.  
-	You can manually assert the type of schemas with the PakNet.ManualTuple<...> type for now.  
+	You can manually assert the type of schemas with the PakNet.Schema<...> type for now.  
 	Using these tuples can be helpful and allows you to structure your data closer to how you can in regular remote events, without any overhead.
 	:::
 ]=]
@@ -79,8 +79,8 @@ export type RateLimitSettings = {
 --- @prop timeout number?
 --- @within RemoteSettings
 export type RemoteSettings<T, V, U..., W...> = {
-	params: Pack.ManualTuple<T, U...>,
-	returns: Pack.ManualTuple<V, W...>?,
+	params: Pack.Schema<T, U...>,
+	returns: Pack.Schema<V, W...>?,
 	remoteType: RemoteType,
 	rateLimit: RateLimitSettings?,
 	timeout: number?,
@@ -146,75 +146,12 @@ export type Remote<T, V, U..., W...> = Server<T, V, U..., W...> & Client<T, V, U
 export type PakNet = {
 	Mount: <T>(self: PakNet, file: Instance, RemoteTable: T) -> T,
 	DefineRemote: <T, V, U..., W...>(self: PakNet, settings: RemoteSettings<T, V, U..., W...>) -> Remote<T, V, U..., W...>,
-	Schema: <T, U...>(self: PakNet, T, U...) -> ManualTuple<T, U...>,
+	Schema: <T, U...>(self: PakNet, T, U...) -> Schema<T, U...>,
 
 	Signal: (identifier: string) -> LemonSignal.Signal<>,
 
-	-- TODO: Export the Pack datatypes type and union that
-	-- For now we will just duplicate the definition here
-	--====================================================--
-	read uint8: number,
-	read UByte: number,
-	read uint16: number,
-	read UShort: number,
-	read uint32: number,
-	read UInt: number,
-
-	read int8: number,
-	read Byte: number,
-	read int16: number,
-	read Short: number,
-	read int32: number,
-	read Int: number,
-
-	read float32: number,
-	read Float: number,
-	read float64: number,
-	read Double: number,
-
-	read boolean: boolean,
-	read BitField: (length: number) -> { boolean },
-
-	read string8: string,
-	read string16: string,
-	read string32: string,
-	read string_fixed: (len: number) -> string,
-
-	read buffer8: buffer,
-	read buffer16: buffer,
-	read buffer32: buffer,
-	read buffer_fixed: (len: number) -> buffer,
-
-	read Color3: Color3,
-	read Color3float32: Color3,
-	read BrickColor: BrickColor,
-
-	read CFrame: CFrame,
-	read Vector3: vector & Vector3,
-	read Vector3int16: vector & Vector3,
-	read Vector2: Vector2,
-	read Vector2int16: Vector2,
-	read Region3: Region3,
-	read Region3int16: Region3int16,
-	read UDim: UDim,
-	read UDim2: UDim2,
-
-	read DateTime: DateTime,
-	read EnumItem: EnumItem,
-	read Instance: Instance,
-
-	read custom: typeof(Pack.custom),
-	read object: <T, U>(metatable: T, classData: U) -> setmetatable<U, T>,
-
-	read Array: <T>(type: T) -> { T },
-	read Dictionary: <T>(format: T) -> T,
-	read Map: <K, V>(keyType: K, valueType: V) -> { [K]: V },
-
-	read null: nil,
-	read nullable: <T>(type: T) -> T?,
-	--====================================================--
-
+	-- Extended datatypes --
 	read ref: any,
-}
+} & Pack.Datatypes
 
 return nil

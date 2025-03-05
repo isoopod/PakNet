@@ -81,7 +81,7 @@ function PakNet.DefineRemote<T, V, U..., W...>(_: types.PakNet, settings: types.
 	return settings :: any
 end
 
-export type Schema<T, U...> = types.ManualTuple<T, U...>
+export type Schema<T, U...> = types.Schema<T, U...>
 function PakNet.Schema<T, U...>(_, v1: T, ...: U...)
 	return Pack:Define(v1, ...)
 end

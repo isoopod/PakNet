@@ -2,24 +2,25 @@
 --!native
 --!optimize 2
 
-local types = require(script.Parent.Parent.Parent._Index["isoopod_pack@0.2.1"].pack.types) -- TODO: Export needed Pack types for external datatypes
+local Pack = require(script.Parent.Parent.Parent.pack)
 
 -- I want to avoid using pack.custom here as it adds a wrapper layer that may very slightly impact speed
 
 local datatype = table.freeze({
 	Eval = "any", -- Put refs last in unions
-	Read = function(Reader: types.Reader): any
-		local inst = Reader.refs[Reader:u16()]
+	Read = function(reader: Pack.ReaderData): any
+		local inst = reader.refs[Pack.Reader.u16(reader)]
 		if typeof(inst) ~= "Instance" then error(`Instance expected. Got {typeof(inst)}`) end
 		return inst
 	end,
-	Write = function(Writer: types.Writer, value: any)
+	Write = function(writer: Pack.WriterData, value: any)
 		if typeof(value) ~= "Instance" then error(`Instance expected. Got {typeof(value)}`) end
 
-		table.insert(Writer.refs, value :: any)
-		Writer:alloc(2)
-		Writer:u16(#Writer.refs)
+		local len = #writer.refs + 1
+		writer.refs[len] = value
+		Pack.Writer.alloc(writer, 2)
+		Pack.Writer.u16(writer, len)
 	end,
-}) :: types.DatatypeInterface<any>
+}) :: Pack.DatatypeInterface<any>
 
 return datatype
