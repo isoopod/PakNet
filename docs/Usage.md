@@ -57,7 +57,7 @@ local namespace = PakNet:Mount(script, {
     SomeRemoteEvent = PakNet:DefineRemote({
         -- params is a schema defining how to read and write the packet.
         -- PakNet:Schema is used the same as Pack:Define
-        params = PakNet:Schema(PakNet.string16),
+        params = PakNet:Schema(PakNet.String16),
         -- remoteType is a string telling PakNet what instances we need for the remote
         -- If it contains "r", a RemoteEvent will be created
         remoteType = "r",
@@ -66,7 +66,7 @@ local namespace = PakNet:Mount(script, {
     SomeUnreliableEvent = PakNet:DefineRemote({
         -- If we are using a tuple schema, we have to assert the type due to luau being unable to capture the generic pack
         -- Hovering over the datatype will show you what the type is defined at if you are unsure
-        params = PakNet:Schema(PakNet.float64, PakNet.Vector3) :: PakNet.Schema<number, vector>,
+        params = PakNet:Schema(PakNet.Float64, PakNet.Vector3) :: PakNet.Schema<number, vector>,
         -- If remoteType contains "u", an UnreliableRemoteEvent will be created
         remoteType = "u",
         -- We can attach a ratelimit to our remote, to prevent it being spammed
@@ -89,7 +89,7 @@ local namespace = PakNet:Mount(script, {
     SomeEverythingEvent = PakNet:DefineRemote({
         -- Heres an example of a more complex schema
         params = PakNet:Schema(PakNet.Dictionary({
-            Name = PakNet.string16,
+            Name = PakNet.String16,
             Level = PakNet.UByte,
             CFrame = PakNet.CFrame,
             Buildings = PakNet.Map(PakNet.Vector3, PakNet.Instance),
@@ -108,7 +108,7 @@ local namespace = PakNet:Mount(script, {
 
 -- You can pass through the global signal function, if you find that useful
 -- Nice if you have a centralized network module, rarther than many separate namespaces
-namespace.Signal = PakNet.Signal
+namespace.Signal = PakNet:LoadGlobalSignal()
 
 return namespace
 ```
@@ -121,10 +121,10 @@ You can copy the definition inside the function and surround it in `typeof()` in
 
 ```lua
  params = PakNet:Schema(PakNet.Dictionary({
-    Name = PakNet.string16,
+    Name = PakNet.String16,
     Level = PakNet.UByte,
 }, PakNet.Int)) :: PakNet.Schema<typeof(PakNet.Dictionary({
-    Name = PakNet.string16,
+    Name = PakNet.String16,
     Level = PakNet.UByte,
 }), typeof(PakNet.Int)>
 ```

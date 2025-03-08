@@ -81,6 +81,25 @@ function PakNet.DefineRemote<T, V, U..., W...>(_: types.PakNet, settings: types.
 	return settings :: any
 end
 
+--[=[
+	@method Schema
+	@within PakNet
+	@external Datatype https://isoopod.github.io/Pack/docs/Datatypes/Primitives
+	@param ... Datatype
+	@return Schema
+
+	Defines a Schema from the provided datatypes.  
+	This supports tuples, however due to luau limitations you will need to manually annotate the type.
+
+	```lua
+	-- The type of this schema will implicitly be infered as CFrame
+	PakNet:Schema(PakNet.CFrame)
+
+	-- For tuples, you must explicitly annotate the type of the schema using PakNet.Schema<...>. 
+	-- The luau type solver can only infer the first argument.
+	PakNet:Schema(PakNet.CFrame, PakNet.Vector3) :: PakNet.Schema<CFrame, Vector3>
+	```
+]=]
 export type Schema<T, U...> = types.Schema<T, U...>
 function PakNet.Schema<T, U...>(_, v1: T, ...: U...)
 	return Pack:Define(v1, ...)
@@ -90,9 +109,48 @@ end
 export type Signal = LemonSignal.Signal<...any>
 local signals = {}
 
-function PakNet.Signal(identifier: string): Signal
-	signals[identifier] = signals[identifier] or LemonSignal.new()
-	return signals[identifier]
+--[=[
+	@method LoadGlobalSignal
+	@within PakNet
+	@return (identifier: string) -> Signal
+	The global signal library provides a way to create and manage signals that can be accessed across multiple scripts within the same execution environment (server or client). This allows scripts to communicate without direct references.  
+
+	Global signals are retrieved using a **string identifier**, making it easy to share events across scripts. However, **they do not persist between actors**, meaning signals created in one actor are not accessible in another.  
+
+	Using the global signal library is **optional**. If you don’t need it, you don’t have to use it. It’s useful for loosely coupling scripts, centralizing event handling, and managing shared state without relying on direct references.
+
+	```lua
+	-- network.luau
+	local namespace = PakNet:Mount(...)
+
+	namespace.Signal = PakNet:LoadGlobalSignal()
+
+	return namespace
+	```
+
+	```lua
+	-- example1.server.luau
+	local network = require(path.to.network)
+
+	local signal = network.Signal("Example")
+	signal:Fire("Hello World!")
+	```
+
+	```lua
+	-- example2.server.luau
+	local network = require(path.to.network)
+
+	local signal = network.Signal("Example")
+	signal:Connect(function(...)
+		print(...) -- >>> Hello World!
+	end)
+	```
+]=]
+function PakNet.LoadGlobalSignal(_: types.PakNet): (identifier: string) -> Signal
+	return function(identifier: string)
+		signals[identifier] = signals[identifier] or LemonSignal.new()
+		return signals[identifier]
+	end
 end
 
 function PakNet.__index(self, key)
@@ -108,8 +166,8 @@ local object = setmetatable({
 	-- Redirects some datatype lookups that would go to Pack to PakNet specific datatypes
 	-- These don't need to be lazy-loaded, as PakNet is probably only going to be used on the main thread
 	_redirects = {
-		Instance = require(script.PakNetDatatypes.instance),
-		ref = require(script.PakNetDatatypes.ref),
+		Instance = require(script.PakNetDatatypes.Instance),
+		Ref = require(script.PakNetDatatypes.Ref),
 		-- We will keep the default behaviour of 'any' once implemented in Pack, and explain the difference between any and ref in the PakNet documentation
 	},
 }, PakNet) :: any

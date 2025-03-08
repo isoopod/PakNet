@@ -48,6 +48,7 @@ export type RateLimitSettings = {
 
 --[=[
 	@class RemoteSettings
+	@external Schema https://isoopod.github.io/Pack/api/Schema
 	(type for params and returns TODO until Pack documentation is ready)
 
 	Provides the structure for creating a Remote in PakNet. These will be created with `PakNet.defineRemote` in the RemoteTable when creating a namespace with `PakNet.mount`
@@ -62,11 +63,11 @@ export type RateLimitSettings = {
 	Using these tuples can be helpful and allows you to structure your data closer to how you can in regular remote events, without any overhead.
 	:::
 ]=]
---- @prop params any
+--- @prop params Schema
 --- @within RemoteSettings
 --- Pack schema defining the structure of the packet
 
---- @prop returns any?
+--- @prop returns Schema
 --- @within RemoteSettings
 --- Pack schema defining the strucutre of the return when invoking the packet, if applicable
 
@@ -145,13 +146,14 @@ export type Remote<T, V, U..., W...> = Server<T, V, U..., W...> & Client<T, V, U
 
 export type PakNet = {
 	Mount: <T>(self: PakNet, file: Instance, RemoteTable: T) -> T,
-	DefineRemote: <T, V, U..., W...>(self: PakNet, settings: RemoteSettings<T, V, U..., W...>) -> Remote<T, V, U..., W...>,
-	Schema: <T, U...>(self: PakNet, T, U...) -> Schema<T, U...>,
 
-	Signal: (identifier: string) -> LemonSignal.Signal<>,
+	Schema: <T, U...>(self: PakNet, T, U...) -> Schema<T, U...>,
+	DefineRemote: <T, V, U..., W...>(self: PakNet, settings: RemoteSettings<T, V, U..., W...>) -> Remote<T, V, U..., W...>,
+
+	LoadGlobalSignal: (self: PakNet) -> (identifier: string) -> Signal<...any>,
 
 	-- Extended datatypes --
-	read ref: any,
+	read Ref: any,
 } & Pack.Datatypes
 
 return nil
