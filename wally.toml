@@ -1,5 +1,5 @@
 [package]
-name = "isopood/paknet"
+name = "isoopod/paknet"
 description = "Schematized networking library."
 version = "0.1.0"
 license = "MIT"
@@ -11,6 +11,6 @@ exclude = ["**"]
 include = ["src", "src/*", "default.project.json", "wally.toml", "LICENSE"]
 
 [dependencies]
-pack = "isoopod/pack@0.4.0"
+pack = "isoopod/pack@0.5.0"
 lemonsignal = "data-oriented-house/lemonsignal@1.10.0"
 typed-promise = "lukadev-0/typed-promise@4.0.2"
