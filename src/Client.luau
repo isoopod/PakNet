@@ -184,7 +184,11 @@ function Client.InvokeServerAsync<T, V, U..., W...>(self: _Client<T, V, U..., W.
 	end) :: any
 end
 
---- @class Client
+--[=[
+	@class Client
+	While a created remote has the type of both Server and Client, You will only have access to the properties and methods here in scripts on the Client Side.
+	Client remotes in PakNet allow clients to send data to the server, request information via remote functions, and listen for server events.
+]=]
 function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types.RemoteSettings<T, V, U..., W...>): types.Client<T, V, U..., W...>
 	local self: _Client<T, V, U..., W...> = setmetatable({}, ClientClass.metatable) :: any
 

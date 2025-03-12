@@ -49,18 +49,16 @@ export type RateLimitSettings = {
 --[=[
 	@class RemoteSettings
 	@external Schema https://isoopod.github.io/Pack/api/Schema
-	(type for params and returns TODO until Pack documentation is ready)
+	Defines the structure for creating a Remote in PakNet. Remotes are created using `PakNet.defineRemote` within a `RemoteTable`, which is then mounted to a namespace using `PakNet.mount`.  
 
-	Provides the structure for creating a Remote in PakNet. These will be created with `PakNet.defineRemote` in the RemoteTable when creating a namespace with `PakNet.mount`
+	- **`params` and `returns`**: Both are **Pack Schemas** created with `PakNet.schema`. The `returns` field is only required if the remote includes a function (`"f"` in `remoteType`).  
+	- **Tuple Support**: If using tuples, you may need to manually assert the type as `PakNet.Schema<arg1, (...vararg)>`, since only the first argument can be inferred.  
+	- **`timeout`**: Determines how long the server waits for a client response when invoking a function. If no value is returned before the timeout expires, the request is dropped and `nil` is returned.  
 
-	params and returns (returns are only needed if the function RemoteType is active) are Pack Schemas created with `PakNet.schema`  
-	If making use of the tuple support, you will need to assert the type of this to `PakNet.Schema<arg1, (...vararg)>`, as only the first arg can be infered.
-	timeout is how long the server will wait when invoking the client. If a value is not return before timeout, the request will be dropped and return nil. 
+	:::tip  
+	Schemas are tuples, but due to Luau’s limitations, only the first argument is properly typed. For now, you can manually assert schema types using `PakNet.Schema<...>`.  
 
-	:::tip
-	Schemas are tuples, however because of luau limitations meaning higer-level polymorphism is not possible right now, only the first argument will be properly typed.  
-	You can manually assert the type of schemas with the PakNet.Schema<...> type for now.  
-	Using these tuples can be helpful and allows you to structure your data closer to how you can in regular remote events, without any overhead.
+	Using tuples allows you to structure data similarly to standard RemoteEvents without adding overhead.  
 	:::
 ]=]
 --- @prop params Schema
@@ -127,7 +125,7 @@ export type Server<T, V, U..., W...> = {
 	Invoke: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (V, W...),
 	InvokeAsync: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> Promise.TypedPromise<V, W...>,
 
-	AddSanityChecK: (self: Server<T, V, U..., W...>, check: (player: Player, T, U...) -> boolean) -> (),
+	AddSanityCheck: (self: Server<T, V, U..., W...>, check: (player: Player, T, U...) -> boolean) -> (),
 }
 
 export type Client<T, V, U..., W...> = {

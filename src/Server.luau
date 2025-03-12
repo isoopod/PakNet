@@ -23,8 +23,8 @@ type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 	_sanityChecks: { (player: Player, T, U...) -> boolean },
 	_nChecks: number,
 
-	_RateLimited: (self: types.Server<T, V, U..., W...>, player: Player) -> boolean,
-	_DoChecks: (self: types.Server<T, V, U..., W...>, player: Player, ...any) -> boolean,
+	_RateLimited: (self: any, player: Player) -> boolean,
+	_DoChecks: (self: any, player: Player, ...any) -> boolean,
 }
 
 Server.ClassName = "Server"
@@ -44,6 +44,7 @@ function Server._DoChecks<T, V, U..., W...>(self: _Server<T, V, U..., W...>, pla
 	for i = 1, self._nChecks do
 		if not self._sanityChecks[i](player, ...) then
 			passed = false
+			self.OnCheckFail:Fire(player)
 			break
 		end
 	end
@@ -321,9 +322,18 @@ function Server.AddSanityCheck<T, V, U..., W...>(self: _Server<T, V, U..., W...>
 	self._nChecks += 1
 end
 
---- @class Server
---- @external Signal https://data-oriented-house.github.io/LemonSignal/classes/signal.html
---- @external Promise https://eryn.io/roblox-lua-promise/api/Promise
+--[=[
+	@class Server
+	@external Signal https://data-oriented-house.github.io/LemonSignal/classes/signal.html
+	@external Promise https://eryn.io/roblox-lua-promise/api/Promise
+	While a created remote has the type of both Server and Client, You will only have access to the properties and methods here in scripts on the Server Side.
+	Server remotes in PakNet allow the server to listen for client events, send data to specific clients, and enforce security measures such as rate limiting and sanity checks.
+
+	Server remotes include additional security and utility features:  
+	- **Sanity Checks**: Built-in support for validating incoming data before processing.  
+	- **Rate Limiting**: Prevents spam by enforcing request limits per player or globally.  
+	- **Tamper Detection**: Events fire when a packet is malformed or fails to deserialize.  
+]=]
 function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types.RemoteSettings<T, V, U..., W...>): types.Server<T, V, U..., W...>
 	local self: _Server<T, V, U..., W...> = setmetatable({}, ServerClass.metatable) :: any
 
@@ -408,16 +418,12 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	end
 	if self._events.r then
 		self._events.r.OnServerEvent:Connect(function(player, buff, refs)
-			if self.OnEvent._head and not self:_RateLimited(player) then -- Check there are any connections and if we are rate limited
-				self.OnEvent:Fire(player, parsePacket(player, buff, refs))
-			end
+			if self.OnEvent._head and not self:_RateLimited(player) and self:_DoChecks(player) then self.OnEvent:Fire(player, parsePacket(player, buff, refs)) end
 		end)
 	end
 	if self._events.u then
 		self._events.u.OnServerEvent:Connect(function(player, buff, refs)
-			if self.OnEvent._head and not self:_RateLimited(player) then -- Check there are any connections and if we are rate limited
-				self.OnEvent:Fire(player, parsePacket(player, buff, refs))
-			end
+			if self.OnEvent._head and not self:_RateLimited(player) and self:_DoChecks(player) then self.OnEvent:Fire(player, parsePacket(player, buff, refs)) end
 		end)
 	end
 

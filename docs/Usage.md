@@ -144,13 +144,15 @@ Remotes in PakNet have a unified API that combines both server and client functi
   The names on the client side remain the same.
 
 - **New Features**:
-  - **Server-only methods**: 
+  - **Server-only additions**: 
+    - **Sanity Checks**: Allows directly linking sanity checks to the remote through `AddSanityCheck`.
     - `FireList` and `FireExcept`: Variants of the `Fire` method.
+    - `OnCheckFail`: Fires when an incoming packet fails the sanity checks.
     - `OnParseError`: Fires when an incoming packet fails to deserialize.
   - **Async Methods**: Both server and client have:
     - `InvokeAsync` (on the client, it's called `InvokeServerAsync`): A non-blocking version of `Invoke` that returns a Promise.
   - **Rate Limiting**:
-    - `OnRateLimited` event: Triggers when a player is rate-limited, and the server will receive the player object.
+    - `OnRateLimited` event: Triggers when a player is rate-limited.
   
 - **Unreliable Variants**: All `Fire` methods have unreliable variants that use a `UnreliableRemoteEvent` instead of a `RemoteEvent`.
 
