@@ -12,7 +12,6 @@ local ClientClass = { metatable = { __index = Client } }
 
 type _Client<T, V, U..., W...> = types.Client<T, V, U..., W...> & {
 	OnClientEvent: LemonSignal.Signal<(T, U...)> | { _head: any? }, -- Public is marked read only
-	OnRateLimited: LemonSignal.Signal<>,
 
 	_events: types.Events,
 	_params: types.Schema<T, U...>,
@@ -76,6 +75,8 @@ end
 	@yields
 	@param args ..any -- The arguments tuple specified by the params schema
 	@return ...any -- The return tuple specified by the returns schema, or nil if it times out
+	Invokes `OnClientInvoke` on the client side, halting the thread until `OnClientInvoke` returns or the invocation times out, determined by the remote settings.  
+	Will return nil if the invocation times out or the return value does not pass all the sanity tests.
 
 	:::warning
 	If the server never returns anything, the thread will be left yielding forever unless a timeout is specified.
@@ -131,7 +132,7 @@ end
 	@param args ..any -- The arguments tuple specified by the params schema
 	@return Promise
 
-	Asynchronous variant of InvokeServer that does not block the calling thread, and instead returns a Promise  
+	Asynchronous variant of [Client.InvokeServer] that does not block the calling thread, and instead returns a Promise  
 
 	:::warning
 	Without an timeout set, the promise can yield forever if the server never returns anything.
@@ -192,8 +193,44 @@ function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	self._returns = settings.returns
 	self._timeout = settings.timeout
 
+	--[=[
+		@prop OnClientEvent Signal
+		@within Client
+		A signal that fires when a Remote is fired from the server with Fire or FireUnreliable (and their variants)
+	]=]
 	if self._events.r or self._events.u then self.OnClientEvent = LemonSignal.new() :: any end
+
+	--[=[
+		@prop OnRateLimited Signal
+		@within Client
+		A signal that fires when the client-side ratelimit rejects sending packet.
+		This can be used to figure out when you have exhausted your budget for the remote.
+	]=]
 	self.OnRateLimited = LemonSignal.new()
+
+	--[=[
+		@prop OnClientInvoke ((any...) -> (any...))?
+		@within Client
+		When using a remote function from server to client, the OnClientInvoke handler must be assigned on the client. This is the same as regular remote functions.  
+		The function must take in the `params` tuple, and return the `returns` tuple.
+
+		```lua
+		-- example.client.luau
+		
+		-- SomeRemoteFunction is a remote with remoteType `f`, param of `Boolean` and return of `String8`
+		network.SomeRemoteFunction.OnClientInvoke = function(player, val: boolean)
+			if val then
+				return "True"
+			else
+				return "False"
+			end
+		end
+		```
+
+		:::tip
+		You should set a timeout value in your remote settings if you are using `OnClientInvoke`
+		:::
+	]=]
 
 	if settings.rateLimit then
 		settings.rateLimit.global = true -- Always treat as global on client

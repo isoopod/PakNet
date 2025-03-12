@@ -14,16 +14,17 @@ local ServerClass = { metatable = { __index = Server } }
 
 type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 	OnEvent: LemonSignal.Signal<(Player, T, U...)> | { _head: any? }, -- Public is marked read only
-	OnRateLimited: LemonSignal.Signal<Player>,
-	OnParseError: LemonSignal.Signal<Player, string>,
 
 	_events: types.Events,
 	_params: types.Schema<T, U...>,
 	_returns: types.Schema<V, W...>?,
 	_timeout: number?,
 	_ratelimit: Ratelimit.RateLimit?,
+	_sanityChecks: { (player: Player, T, U...) -> boolean },
+	_nChecks: number,
 
 	_RateLimited: (self: types.Server<T, V, U..., W...>, player: Player) -> boolean,
+	_DoChecks: (self: types.Server<T, V, U..., W...>, player: Player, ...any) -> boolean,
 }
 
 Server.ClassName = "Server"
@@ -35,6 +36,19 @@ function Server._RateLimited<T, V, U..., W...>(self: _Server<T, V, U..., W...>, 
 		return ratelimited
 	end
 	return false
+end
+
+function Server._DoChecks<T, V, U..., W...>(self: _Server<T, V, U..., W...>, player: Player, ...: any)
+	local passed = true
+
+	for i = 1, self._nChecks do
+		if not self._sanityChecks[i](player, ...) then
+			passed = false
+			break
+		end
+	end
+
+	return passed
 end
 
 --- @method Fire
@@ -170,8 +184,10 @@ end
 	@param to Player
 	@param args ..any -- The arguments tuple specified by the params schema
 	@return ...any -- The return tuple specified by the returns schema, or nil if it times out
+	Invokes `OnClientInvoke` on the client side, halting the thread until `OnClientInvoke` returns or the invocation times out, determined by the remote settings.  
+	Will return nil if the invocation times out or the return value does not pass all the sanity tests.
 
-	:::danger
+	:::warning
 	Invoking the client from the server should always be done with a timeout set in the remote settings.  
 	In the event an exploiter modifies the client invoke callback to never return, 
 	not having a callback will cause that thread to yield forever on the server, piling up in memory.  
@@ -195,6 +211,13 @@ function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Pl
 		result = { self._events.f:InvokeClient(to, packet, refs) }
 		pcall(task.cancel, timeoutThread)
 		finished = true
+
+		if not self:_DoChecks(to, unpack(result)) then
+			self.OnCheckFail:Fire(to)
+			warn("Value returned by InvokeClient did not pass all sanity tests")
+			result = nil
+		end
+
 		task.spawn(thread)
 	end)
 
@@ -229,9 +252,9 @@ end
 	@param args ..any -- The arguments tuple specified by the params schema
 	@return Promise
 
-	Asynchronous variant of Invoke that does not block the calling thread, and instead returns a Promise  
+	Asynchronous variant of [Server.Invoke] that does not block the calling thread, and instead returns a Promise  
 
-	:::danger
+	:::warning
 	Without an timeout set, the promise can yield forever.
 
 	You could use the Promise:timeout(n) method as well, just make sure to do this everywhere if you are removing the timeout.  
@@ -260,6 +283,11 @@ function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, t
 		-- Invoke the client
 		invokeThread = task.spawn(function()
 			local result = { self._events.f:InvokeClient(to, packet, refs) }
+			if not self:_DoChecks(to, unpack(result)) then
+				self.OnCheckFail:Fire(to)
+				reject("Value returned by InvokeClient did not pass all sanity tests")
+			end
+
 			pcall(task.cancel, timeoutThread)
 			resolve(table.unpack(result))
 		end)
@@ -279,6 +307,20 @@ function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, t
 	end) :: any
 end
 
+--[=[
+	@method AddSanityCheck
+	@within Server
+	@param check (player: Player, ...any) -> boolean
+	Directly attaches a sanity check to the remote, that will be checked before firing the OnEvent signal. 
+	You can use this to avoid repeating input validation when you want to connect to the event in multiple places.
+
+	Sanity checks are also called for the return value of invokes.
+]=]
+function Server.AddSanityCheck<T, V, U..., W...>(self: _Server<T, V, U..., W...>, check: (player: Player, T, U...) -> ())
+	table.insert(self._sanityChecks, check)
+	self._nChecks += 1
+end
+
 --- @class Server
 --- @external Signal https://data-oriented-house.github.io/LemonSignal/classes/signal.html
 --- @external Promise https://eryn.io/roblox-lua-promise/api/Promise
@@ -289,31 +331,59 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	self._params = settings.params
 	self._returns = settings.returns
 	self._timeout = settings.timeout
+	self._sanityChecks = {}
+	self._nChecks = 0
 
 	--[=[
-		@prop onEvent Signal
+		@prop OnEvent Signal
 		@within Server
-		A signal that fires when a Remote is fired with FireServer or FireServerUnreliable from the client
-		if self._events.r or self._events.u then self.onEvent = LemonSignal.new() end
+		A signal that fires when a Remote is fired from the client with FireServer or FireServerUnreliable (and their variants)
 	]=]
+	if self._events.r or self._events.u then self.OnEvent = LemonSignal.new() :: any end
 
 	--[=[
-		@prop onRateLimited Signal
+		@prop OnRateLimited Signal
 		@within Server
 		A signal that fires when the server-side ratelimit rejects a packet. Sends the player that tripped the ratelimit (even if global).
 		This can be a sign of tampering, but there may still be cases where flucuations in network latency cause false positives.
 		The server rate limit is adjusted to be slightly less strict than the client rate limit to compensate for this.
 	]=]
-	self.OnRateLimited = LemonSignal.new()
+	self.OnRateLimited = LemonSignal.new() :: any
 
 	--[=[
-		@prop onParseError Signal
+		@prop OnParseError Signal
 		@within Server
 		A signal that fires when parsing an incoming packet errors. Sends the player that caused the parse error, followed by the error.
 		If this happens, it means either a client is tampering with something or you have an issue with your remotes on the client side.
-		I would recommend
 	]=]
-	self.OnParseError = LemonSignal.new()
+	self.OnParseError = LemonSignal.new() :: any
+
+	--[=[
+		@prop OnCheckFail Signal
+		@within Server
+		A signal that fires when a sanity check attached to the remote fails. Sends the player which sent the packet that failed the check.
+	]=]
+	self.OnCheckFail = LemonSignal.new()
+
+	--[=[
+		@prop OnInvoke ((player: Player, any...) -> (any...))?
+		@within Server
+		When using a remote function from client to server, the OnInvoke handler must be assigned on the server. This is used in the same way as regular remote functions.  
+		The function must take in a player and the `params` tuple, and return the `returns` tuple.
+
+		```lua
+		-- example.server.luau
+		
+		-- SomeRemoteFunction is a remote with remoteType `f`, param of `Boolean` and return of `String8`
+		network.SomeRemoteFunction.OnInvoke = function(player, val: boolean)
+			if val then
+				return "True"
+			else
+				return "False"
+			end
+		end
+		```
+	]=]
 
 	if settings.rateLimit then self._ratelimit = Ratelimit.new(settings.rateLimit) end
 
