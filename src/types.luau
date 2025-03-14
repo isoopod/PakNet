@@ -154,7 +154,7 @@ export type PakNet = {
 	LoadGlobalSignal: (self: PakNet) -> (identifier: string) -> Signal<...any>,
 
 	-- Extended datatypes --
-	read Ref: any,
+	Ref: any,
 } & Pack.Datatypes
 
 return nil
