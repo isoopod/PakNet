@@ -399,11 +399,11 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 
 	local function parsePacket(player, buff, refs): ...any
 		local s, result = pcall(function()
-			return self._params:Read(buff, refs)
+			return { self._params:Read(buff, refs) }
 		end)
 
 		if not s then
-			self.OnParseError:Fire(player, result)
+			self.OnParseError:Fire(player, unpack(result) :: any)
 			error(`Parse error for {player}: {result}`)
 		end
 
