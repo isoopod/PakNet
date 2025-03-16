@@ -24,7 +24,7 @@ export type Schema<T, U...> = Pack.Schema<T, U...>
 	continuously changing data. These events are not resent if they are lost and they do not wait for previously fired events to 
 	arrive before being processed, potentially resulting in reduced latency and network traffic.
 ]=]
-export type RemoteType = "f" | "r" | "u" | "fr" | "fu" | "fru"
+export type RemoteType = "f" | "r" | "u" | "ru" | "fr" | "fu" | "fru"
 
 --[=[
 	@interface RateLimitSettings
