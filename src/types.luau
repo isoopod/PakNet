@@ -148,8 +148,8 @@ export type Remote<T, V, U..., W...> = Server<T, V, U..., W...> & Client<T, V, U
 export type PakNet = {
 	Mount: <T>(self: PakNet, file: Instance, RemoteTable: T) -> T,
 
-	Schema: <T, U...>(self: PakNet, T, U...) -> Schema<T, U...>,
-	DefineRemote: <T, V, U..., W...>(self: PakNet, settings: RemoteSettings<T, V, U..., W...>) -> Remote<T, V, U..., W...>,
+	Schema: <T, U...>(self: any, T, U...) -> Schema<T, U...>,
+	DefineRemote: <T, V, U..., W...>(self: any, settings: RemoteSettings<T, V, U..., W...>) -> Remote<T, V, U..., W...>,
 
 	LoadGlobalSignal: (self: PakNet) -> (identifier: string) -> Signal<...any>,
 
