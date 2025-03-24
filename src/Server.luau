@@ -29,6 +29,14 @@ type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 
 Server.ClassName = "Server"
 
+local function concatArgs(...)
+	local res = {}
+	for _, v in { ... } do
+		table.insert(res, tostring(v))
+	end
+	return table.concat(res, ", ")
+end
+
 function Server._RateLimited<T, V, U..., W...>(self: _Server<T, V, U..., W...>, player: Player): boolean
 	if self._ratelimit then
 		local ratelimited = not self._ratelimit:RequestAllowed(player)
@@ -60,7 +68,7 @@ function Server.Fire<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Play
 	assert(self._events.r, "[PAKNET]: To use 'Fire' you must have 'r' in the remoteType.")
 
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
-	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
+	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {concatArgs(...)}`) end
 
 	self._events.r:FireClient(to, packet, refs)
 end
@@ -115,7 +123,7 @@ function Server.FireUnreliable<T, V, U..., W...>(self: _Server<T, V, U..., W...>
 	assert(self._events.u, "[PAKNET]: To use 'FireUnreliable' you must have 'u' in the remoteType.")
 
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
-	if not s then error(`[PAKNET]: Error encoding unreliable packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
+	if not s then error(`[PAKNET]: Error encoding unreliable packet for transmission: {packet}\nArguments: {v1}, {concatArgs(...)}`) end
 
 	self._events.u:FireClient(to, packet, refs)
 end
@@ -200,7 +208,7 @@ function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Pl
 	assert(self._events.f, "[PAKNET]: To use 'Invoke' you must have 'f' in the remoteType.")
 
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
-	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {table.concat({ ... }, ", ")}`) end
+	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {concatArgs(...)}`) end
 
 	local result
 	local finished = false
@@ -269,7 +277,7 @@ function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, t
 	return Promise.new(function(resolve, reject, onCancel)
 		local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, unpack(vararg))
 		if not s then
-			reject(`Error encoding packet for transmission: {packet}\nArguments: {v1}, {table.concat(vararg, ", ")}`)
+			reject(`Error encoding packet for transmission: {packet}\nArguments: {v1}, {concatArgs(unpack(vararg))}`)
 			return
 		end
 
