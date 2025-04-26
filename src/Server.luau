@@ -103,7 +103,7 @@ end
 function Server.FireExcept<T, V, U..., W...>(self: _Server<T, V, U..., W...>, except: { Player }, v1: T, ...: U...)
 	assert(self._events.r, "[PAKNET]: To use 'FireExcept' you must have 'r' in the remoteType.")
 	for _, v in Players:GetPlayers() do
-		if not table.find(v, except) then self:Fire(v, v1, ...) end
+		if not table.find(except, v) then self:Fire(v, v1, ...) end
 	end
 end
 
@@ -182,7 +182,7 @@ end
 function Server.FireExceptUnreliable<T, V, U..., W...>(self: _Server<T, V, U..., W...>, except: { Player }, v1: T, ...: U...)
 	assert(self._events.u, "[PAKNET]: To use 'FireExceptUnreliable' you must have 'u' in the remoteType.")
 	for _, v in Players:GetPlayers() do
-		if not table.find(v, except) then self:FireUnreliable(v, v1, ...) end
+		if not table.find(except, v) then self:FireUnreliable(v, v1, ...) end
 	end
 end
 
