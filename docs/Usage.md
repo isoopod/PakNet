@@ -226,7 +226,7 @@ end
 ```
 
 ### Bulk Protection
-Setting up `OnRateLimited` and other security logic individually for each remote can quickly become tedious. Instead, you can apply protections to an entire namespace at once by iterating over it.  
+Setting up `OnRateLimited` and other security events individually for each remote can quickly become tedious. Instead, you can apply protections to an entire namespace at once by iterating over it.  
 
 When iterating a mounted namespace, only remotes are returned — so you don't need to worry about filtering out extra entries like `Signal`.
 
