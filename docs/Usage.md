@@ -172,7 +172,7 @@ The parts of the API you can use depend on whether you’re on the server or cli
 - **Server** always has access to the `OnParseError` event.
 - **Both server and client** always have access to the `OnRateLimited` event and the `ClassName` property (which indicates whether the current context is "Server" or "Client").
 
-```lua title="ClientExample.luau"
+```lua title="Example.client.luau"
 local network = require(game:GetService("ReplicatedStorage"):WaitForChild("networkExample"))
 
 network.SomeRemoteEvent:FireServer("Hello World!")
@@ -196,7 +196,7 @@ print(network.SomeRemoteFunction:InvokeServer({
 -- >>> 9001
 ```
 
-```lua title="ServerExample.luau"
+```lua title="Example.server.luau"
 local network = require(game:GetService("ReplicatedStorage"):WaitForChild("networkExample"))
 
 -- A big benefit of schemas is that you get proper typings, so message will default to string in this example
@@ -224,3 +224,33 @@ network.SomeRemoteFunction.OnInvoke = function(player, data)
     return data.Level
 end
 ```
+
+### Bulk Protection
+Setting up `OnRateLimited` and other security logic individually for each remote can quickly become tedious. Instead, you can apply protections to an entire namespace at once by iterating over it.  
+
+When iterating a mounted namespace, only remotes are returned — so you don't need to worry about filtering out extra entries like `Signal`.
+
+```lua title="BulkProtection.server.luau"
+local network = require(game:GetService("ReplicatedStorage"):WaitForChild("networkExample"))
+
+-- This example just kicks the player
+-- You may want to hook this up to a proper ban system
+for name, remote in network do
+    remote.OnRateLimited:Connect(function(player)
+        player:Kick("Attempted to bypass rate limit")
+    end)
+
+    remote.OnParseError:Connect(function(player)
+        player:Kick("Sent invalid packet")
+    end)
+
+    remote.OnCheckFail:Connect(function(player)
+        player:Kick("Tripped a sanity check")
+    end)
+end
+```
+
+:::warning
+Never store sanity checks or other protections inside the module that creates the namespace — or anywhere the client has access to.  
+Always keep security logic server-side and isolated.
+:::

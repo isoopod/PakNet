@@ -53,7 +53,20 @@ function PakNet.Mount(_: types.PakNet, file: Instance, RemoteTable: types.Remote
 
 	local eventTable = MountNamespace(file, SALT, RemoteTable)
 
-	local remotes: { [string]: any } = {}
+	local remotes: { [string]: any } = setmetatable({}, {
+		-- Only iterate over remotes in GI (This is to ignore Signal if added)
+		__iter = function(self)
+			local nextKey: any, nextVal: any = next(self, nil)
+			return function()
+				while nextKey do
+					local k, v = nextKey, nextVal
+					nextKey, nextVal = next(self, nextKey)
+					if type(v) == "table" and (v.ClassName == "Server" or v.ClassName == "Client") then return k, v end
+				end
+				return nil
+			end
+		end,
+	})
 
 	for name, settings in RemoteTable do
 		local events = eventTable[name]
