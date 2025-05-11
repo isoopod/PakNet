@@ -11,7 +11,7 @@ local types = require(script.Parent.types)
 local IS_SERVER = RunService:IsServer()
 local SHOULD_SEARCH = not IS_SERVER or script:GetActor() ~= nil -- Search for remotes if not on the main server environment
 
-local PACK_CONFIG = (SharedTableRegistry:GetSharedTable("PACK_CONFIG")) :: SharedTable
+local PACK_CONFIG = SharedTableRegistry:GetSharedTable("PACK_CONFIG")
 local DEBUG = PACK_CONFIG.__DEBUG__ == true
 
 local function splitSalt(uuid: string): (string, string)
