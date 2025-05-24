@@ -2,16 +2,16 @@
 --!optimize 2
 
 -- Modules
-local LemonSignal = require(script.Parent.Parent.lemonsignal)
-local Promise = require(script.Parent.Parent["typed-promise"])
+local Promise = require(script.Parent.Parent.Promise)
 local Ratelimit = require(script.Parent.Ratelimit)
+local Signal = require(script.Parent.Parent.Signal)
 local types = require(script.Parent.types)
 
 local Client = {}
 local ClientClass = { metatable = { __index = Client } }
 
 type _Client<T, V, U..., W...> = types.Client<T, V, U..., W...> & {
-	OnClientEvent: LemonSignal.Signal<(T, U...)> | { _head: any? }, -- Public is marked read only
+	OnClientEvent: any,
 
 	_events: types.Events,
 	_params: types.Schema<T, U...>,
@@ -93,7 +93,7 @@ end
 function Client.InvokeServer<T, V, U..., W...>(self: _Client<T, V, U..., W...>, v1: T, ...: U...): (V, W...)
 	assert(self._events.f, "[PAKNET]: To use 'InvokeServer' you must have 'f' in the remoteType.")
 
-	if self:_RateLimited() then return nil :: any end
+	if self:_RateLimited() then return nil :: any, nil :: any end
 
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {concatArgs(...)}`) end
@@ -131,7 +131,7 @@ function Client.InvokeServer<T, V, U..., W...>(self: _Client<T, V, U..., W...>, 
 
 	coroutine.yield()
 
-	return table.unpack(result or {}) :: any
+	return table.unpack(result or {}) :: any, nil :: any
 end
 
 --[=[
@@ -210,7 +210,7 @@ function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types
 		@within Client
 		A signal that fires when a Remote is fired from the server with Fire or FireUnreliable (and their variants)
 	]=]
-	if self._events.r or self._events.u then self.OnClientEvent = LemonSignal.new() :: any end
+	if self._events.r or self._events.u then self.OnClientEvent = Signal.new() :: any end
 
 	--[=[
 		@prop OnRateLimited Signal
@@ -218,7 +218,7 @@ function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types
 		A signal that fires when the client-side ratelimit rejects sending packet.
 		This can be used to figure out when you have exhausted your budget for the remote.
 	]=]
-	self.OnRateLimited = LemonSignal.new()
+	self.OnRateLimited = Signal.new()
 
 	--[=[
 		@prop OnClientInvoke ((any...) -> (any...))?
@@ -252,7 +252,7 @@ function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	if self._events.f then
 		self._events.f.OnClientInvoke = function(buff, refs)
 			if self.OnClientInvoke then return self.OnClientInvoke(self._params:Read(buff, refs)) end
-			return nil :: any
+			return nil :: any, nil :: any
 		end
 	end
 	if self._events.r then

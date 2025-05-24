@@ -6,10 +6,10 @@ local RunService = game:GetService("RunService")
 local SharedTableRegistry = game:GetService("SharedTableRegistry")
 -- Modules
 local Client = require(script.Client)
-local LemonSignal = require(script.Parent.lemonsignal)
 local MountNamespace = require(script.MountNamespace)
-local Pack = require(script.Parent.pack)
+local Pack = require(script.Parent.Pack)
 local Server = require(script.Server)
+local Signal = require(script.Parent.Signal)
 local types = require(script.types)
 
 local SALT = string.gsub(game.JobId, "-", ""):upper()
@@ -119,7 +119,7 @@ function PakNet.Schema<T, U...>(_, v1: T, ...: U...)
 end
 
 -- Global signal by identifier
-export type Signal = LemonSignal.Signal<...any>
+export type Signal = Signal.Signal<...any>
 local signals = {}
 
 --[=[
@@ -161,7 +161,7 @@ local signals = {}
 ]=]
 function PakNet.LoadGlobalSignal(_: types.PakNet): (identifier: string) -> Signal
 	return function(identifier: string)
-		signals[identifier] = signals[identifier] or LemonSignal.new()
+		signals[identifier] = signals[identifier] or Signal.new()
 		return signals[identifier]
 	end
 end

@@ -4,16 +4,16 @@
 -- Services
 local Players = game:GetService("Players")
 -- Modules
-local LemonSignal = require(script.Parent.Parent.lemonsignal)
-local Promise = require(script.Parent.Parent["typed-promise"])
+local Promise = require(script.Parent.Parent.Promise)
 local Ratelimit = require(script.Parent.Ratelimit)
+local Signal = require(script.Parent.Parent.Signal)
 local types = require(script.Parent.types)
 
 local Server = {}
 local ServerClass = { metatable = { __index = Server } }
 
 type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
-	OnEvent: LemonSignal.Signal<(Player, T, U...)> | { _head: any? }, -- Public is marked read only
+	OnEvent: any,
 
 	_events: types.Events,
 	_params: types.Schema<T, U...>,
@@ -251,7 +251,7 @@ function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Pl
 
 	coroutine.yield()
 
-	return table.unpack(result or {}) :: any
+	return table.unpack(result or {}) :: any, nil :: any
 end
 
 --[=[
@@ -357,7 +357,7 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 		@within Server
 		A signal that fires when a Remote is fired from the client with FireServer or FireServerUnreliable (and their variants)
 	]=]
-	if self._events.r or self._events.u then self.OnEvent = LemonSignal.new() :: any end
+	if self._events.r or self._events.u then self.OnEvent = Signal.new() :: any end
 
 	--[=[
 		@prop OnRateLimited Signal
@@ -366,7 +366,7 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 		This can be a sign of tampering, but there may still be cases where flucuations in network latency cause false positives.
 		The server rate limit is adjusted to be slightly less strict than the client rate limit to compensate for this.
 	]=]
-	self.OnRateLimited = LemonSignal.new() :: any
+	self.OnRateLimited = Signal.new() :: any
 
 	--[=[
 		@prop OnParseError Signal
@@ -374,14 +374,14 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 		A signal that fires when parsing an incoming packet errors. Sends the player that caused the parse error, followed by the error.
 		If this happens, it means either a client is tampering with something or you have an issue with your remotes on the client side.
 	]=]
-	self.OnParseError = LemonSignal.new() :: any
+	self.OnParseError = Signal.new() :: any
 
 	--[=[
 		@prop OnCheckFail Signal
 		@within Server
 		A signal that fires when a sanity check attached to the remote fails. Sends the player which sent the packet that failed the check.
 	]=]
-	self.OnCheckFail = LemonSignal.new()
+	self.OnCheckFail = Signal.new()
 
 	--[=[
 		@prop OnInvoke ((player: Player, any...) -> (any...))?
@@ -421,7 +421,7 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	if self._events.f then
 		self._events.f.OnServerInvoke = function(player: Player, buff, refs)
 			if self.OnInvoke and not self:_RateLimited(player) then return self.OnInvoke(player, parsePacket(player, buff, refs)) end
-			return nil :: any
+			return nil :: any, nil :: any
 		end
 	end
 	if self._events.r then

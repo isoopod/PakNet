@@ -11,6 +11,6 @@ exclude = ["**"]
 include = ["src", "src/*", "default.project.json", "wally.toml", "LICENSE"]
 
 [dependencies]
-pack = "isoopod/pack@0.5.3"
-lemonsignal = "data-oriented-house/lemonsignal@1.10.0"
-typed-promise = "lukadev-0/typed-promise@4.0.2"
+Pack = "isoopod/pack@^0.6"
+Signal = "data-oriented-house/lemonsignal@1.10.0"
+Promise = "howmanysmall/typed-promise@4.0.6"

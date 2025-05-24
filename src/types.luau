@@ -1,8 +1,8 @@
 --!strict
 
-local LemonSignal = require(script.Parent.Parent.lemonsignal)
-local Pack = require(script.Parent.Parent.pack)
-local Promise = require(script.Parent.Parent["typed-promise"])
+local LemonSignal = require(script.Parent.Parent.Signal)
+local Pack = require(script.Parent.Parent.Pack)
+local Promise = require(script.Parent.Parent.Promise)
 
 export type Schema<T, U...> = Pack.Schema<T, U...>
 

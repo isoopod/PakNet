@@ -2,12 +2,12 @@
   "name": "PakNet",
   "tree": {
     "$path": "Packages",
-    "paknet": {
+    "PakNet": {
       "$path": "src"
     },
     "$className": "ModuleScript",
     "$properties": {
-      "Source": "local REQUIRED_MODULE = require(script.paknet)\n\nreturn REQUIRED_MODULE -- TODO: Export types"
+      "Source": "local REQUIRED_MODULE = require(script.paknet)\nexport type Schema<T, U...> = REQUIRED_MODULE.Schema<T, U...>\nexport type Signal = REQUIRED_MODULE.Signal \nreturn REQUIRED_MODULE"
     }
   }
 }

@@ -12,7 +12,7 @@ local IS_SERVER = RunService:IsServer()
 local SHOULD_SEARCH = not IS_SERVER or script:GetActor() ~= nil -- Search for remotes if not on the main server environment
 
 local PACK_CONFIG = SharedTableRegistry:GetSharedTable("PACK_CONFIG")
-local DEBUG = PACK_CONFIG.__DEBUG__ == true
+local DEBUG = PACK_CONFIG.__DEBUG__ == true -- When debug is on, use identifiable remote names for easier debugging
 
 local function splitSalt(uuid: string): (string, string)
 	return uuid:sub(1, 16), uuid:sub(17, 32)
