@@ -2,7 +2,7 @@
 --!native
 --!optimize 2
 
-local Pack = require(script.Parent.Parent.Parent.pack)
+local Pack = require(script.Parent.Parent.Parent.Pack)
 
 local datatype = table.freeze({
 	Eval = "Instance",
@@ -13,7 +13,7 @@ local datatype = table.freeze({
 	end,
 	Write = function(writer: Pack.WriterData, value: any)
 		if typeof(value) ~= "Instance" then error(`Instance expected. Got {typeof(value)}`) end
-                Pack.Writer.addRef(writer, value)
+		Pack.Writer.addRef(writer, value)
 	end,
 }) :: Pack.DatatypeInterface<any>
 
