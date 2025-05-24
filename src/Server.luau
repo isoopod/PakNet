@@ -426,12 +426,18 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	end
 	if self._events.r then
 		self._events.r.OnServerEvent:Connect(function(player, buff, refs)
-			if self.OnEvent._head and not self:_RateLimited(player) and self:_DoChecks(player) then self.OnEvent:Fire(player, parsePacket(player, buff, refs)) end
+			if self.OnEvent._head and not self:_RateLimited(player) then
+				local packet = { parsePacket(player, buff, refs) }
+				if self:_DoChecks(player, table.unpack(packet)) then self.OnEvent:Fire(player, table.unpack(packet)) end
+			end
 		end)
 	end
 	if self._events.u then
 		self._events.u.OnServerEvent:Connect(function(player, buff, refs)
-			if self.OnEvent._head and not self:_RateLimited(player) and self:_DoChecks(player) then self.OnEvent:Fire(player, parsePacket(player, buff, refs)) end
+			if self.OnEvent._head and not self:_RateLimited(player) then
+				local packet = { parsePacket(player, buff, refs) }
+				if self:_DoChecks(player, table.unpack(packet)) then self.OnEvent:Fire(player, table.unpack(packet)) end
+			end
 		end)
 	end
 
