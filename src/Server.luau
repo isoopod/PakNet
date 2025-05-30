@@ -210,14 +210,14 @@ function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Pl
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {concatArgs(...)}`) end
 
-	local result
+	local result, returnRefs
 	local finished = false
 
 	local thread = coroutine.running()
 	local invokeThread: thread, timeoutThread: thread
 
 	invokeThread = task.spawn(function()
-		result = { self._events.f:InvokeClient(to, packet, refs) }
+		result, returnRefs = self._events.f:InvokeClient(to, packet, refs)
 		pcall(task.cancel, timeoutThread)
 		finished = true
 
@@ -251,7 +251,19 @@ function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Pl
 
 	coroutine.yield()
 
-	return table.unpack(result or {}) :: any, nil :: any
+	if result == nil then return nil, nil :: any end
+
+	assert(self._returns, "[PAKNET]: Remote function missing `returns` field.")
+	local s2, result2 = pcall(function()
+		return { self._returns:Read(result, returnRefs) }
+	end)
+
+	if not s2 then
+		self.OnParseError:Fire(to, unpack(result2) :: any)
+		error(`Parse error for {to}: {result}`)
+	end
+
+	return unpack(result2), nil :: any
 end
 
 --[=[
@@ -272,6 +284,8 @@ end
 ]=]
 function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, v1: T, ...: U...): Promise.TypedPromise<V, W...>
 	assert(self._events.f, "[PAKNET]: To use 'InvokeAsync' you must have 'f' in the remoteType.")
+	assert(self._returns, "[PAKNET]: Remote function missing `returns` field.")
+
 	local vararg = { ... }
 
 	return Promise.new(function(resolve, reject, onCancel)
@@ -291,7 +305,17 @@ function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, t
 
 		-- Invoke the client
 		invokeThread = task.spawn(function()
-			local result = { self._events.f:InvokeClient(to, packet, refs) }
+			local packet2, returnRefs = self._events.f:InvokeClient(to, packet, refs)
+
+			local s2, result = pcall(function()
+				return { self._returns:Read(packet2, returnRefs) }
+			end)
+
+			if not s2 then
+				self.OnParseError:Fire(to, unpack(result) :: any)
+				reject(`Parse error for {to}: {result}`)
+			end
+
 			if not self:_DoChecks(to, unpack(result)) then
 				self.OnCheckFail:Fire(to)
 				reject("Value returned by InvokeClient did not pass all sanity tests")
@@ -420,7 +444,15 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 
 	if self._events.f then
 		self._events.f.OnServerInvoke = function(player: Player, buff, refs)
-			if self.OnInvoke and not self:_RateLimited(player) then return self.OnInvoke(player, parsePacket(player, buff, refs)) end
+			if self.OnInvoke and not self:_RateLimited(player) then
+				local returns = { self.OnInvoke(player, parsePacket(player, buff, refs)) }
+
+				assert(self._returns, "[PAKNET]: Remote function missing `returns` field.")
+				local s, packet: buffer, returnRefs: { any } = pcall(self._returns.Write, self._returns, unpack(returns))
+				if not s then error(`[PAKNET]: Error encoding return packet for transmission: {packet}\nArguments: {concatArgs(unpack(returns))}`) end
+
+				return packet, returnRefs
+			end
 			return nil :: any, nil :: any
 		end
 	end

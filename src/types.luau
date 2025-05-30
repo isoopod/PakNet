@@ -123,7 +123,7 @@ export type Server<T, V, U..., W...> = {
 	FireExceptUnreliable: (self: Server<T, V, U..., W...>, except: { Player }, T, U...) -> (),
 
 	Invoke: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (V, W...),
-	InvokeAsync: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> Promise.TypedPromise<V, W...>,
+	InvokeAsync: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> Promise.TypedPromise<(V, W...)>,
 
 	AddSanityCheck: (self: Server<T, V, U..., W...>, check: (player: Player, T, U...) -> boolean) -> (),
 }
@@ -140,7 +140,7 @@ export type Client<T, V, U..., W...> = {
 	FireServerUnreliable: (self: Client<T, V, U..., W...>, T, U...) -> (),
 
 	InvokeServer: (self: Client<T, V, U..., W...>, T, U...) -> (V, W...),
-	InvokeServerAsync: (self: Client<T, V, U..., W...>, T, U...) -> Promise.TypedPromise<V, W...>,
+	InvokeServerAsync: (self: Client<T, V, U..., W...>, T, U...) -> Promise.TypedPromise<(V, W...)>,
 }
 
 export type Remote<T, V, U..., W...> = Server<T, V, U..., W...> & Client<T, V, U..., W...>

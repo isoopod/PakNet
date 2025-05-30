@@ -98,14 +98,14 @@ function Client.InvokeServer<T, V, U..., W...>(self: _Client<T, V, U..., W...>, 
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {concatArgs(...)}`) end
 
-	local result
+	local result, returnRefs
 	local finished = false
 
 	local thread = coroutine.running()
 	local invokeThread: thread, timeoutThread: thread
 
 	invokeThread = task.spawn(function()
-		result = { self._events.f:InvokeServer(packet, refs) }
+		result, returnRefs = self._events.f:InvokeServer(packet, refs)
 		pcall(task.cancel, timeoutThread)
 		finished = true
 		task.spawn(thread)
@@ -131,7 +131,10 @@ function Client.InvokeServer<T, V, U..., W...>(self: _Client<T, V, U..., W...>, 
 
 	coroutine.yield()
 
-	return table.unpack(result or {}) :: any, nil :: any
+	if result == nil then return nil, nil :: any end
+
+	assert(self._returns, "[PAKNET]: Remote function missing `returns` field.")
+	return self._returns:Read(result, returnRefs)
 end
 
 --[=[
@@ -151,6 +154,8 @@ end
 ]=]
 function Client.InvokeServerAsync<T, V, U..., W...>(self: _Client<T, V, U..., W...>, v1: T, ...: U...): Promise.TypedPromise<V, W...>
 	assert(self._events.f, "[PAKNET]: To use 'InvokeServerAsync' you must have 'f' in the remoteType.")
+	assert(self._returns, "[PAKNET]: Remote function missing `returns` field.")
+
 	local vararg = { ... }
 
 	return Promise.new(function(resolve, reject, onCancel)
@@ -172,9 +177,16 @@ function Client.InvokeServerAsync<T, V, U..., W...>(self: _Client<T, V, U..., W.
 
 		-- Invoke the client
 		invokeThread = task.spawn(function()
-			local result = { self._events.f:InvokeServer(packet, refs) }
+			local packet2, returnRefs = self._events.f:InvokeServer(packet, refs)
+
+			local s2, result = pcall(function()
+				return { self._returns:Read(packet2, returnRefs) }
+			end)
+
+			if not s2 then reject(`Error parsing return packet: {result}`) end
+
 			pcall(task.cancel, timeoutThread)
-			resolve(table.unpack(result))
+			resolve(unpack(result))
 		end)
 
 		-- Timeout handling
@@ -251,7 +263,15 @@ function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types
 
 	if self._events.f then
 		self._events.f.OnClientInvoke = function(buff, refs)
-			if self.OnClientInvoke then return self.OnClientInvoke(self._params:Read(buff, refs)) end
+			if self.OnClientInvoke then
+				local returns = { self.OnClientInvoke(self._params:Read(buff, refs)) }
+
+				assert(self._returns, "[PAKNET]: Remote function missing `returns` field.")
+				local s, packet: buffer, returnRefs: { any } = pcall(self._returns.Write, self._returns, unpack(returns))
+				if not s then error(`[PAKNET]: Error encoding return packet for transmission: {packet}\nArguments: {concatArgs(unpack(returns))}`) end
+
+				return packet, returnRefs
+			end
 			return nil :: any, nil :: any
 		end
 	end
