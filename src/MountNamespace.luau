@@ -5,7 +5,7 @@
 local RunService = game:GetService("RunService")
 local SharedTableRegistry = game:GetService("SharedTableRegistry")
 -- Modules
-local SHA2 = require(script.Parent.SHA2)
+local SHA224 = require(script.Parent.sha224)
 local types = require(script.Parent.types)
 
 local IS_SERVER = RunService:IsServer()
@@ -64,7 +64,7 @@ local function SafeMountNamespace(file: Instance, salt: string, remoteTable: typ
 		-- Create the needed instnaces for this Remote
 		-- See the SHA2 module for why we use SHA224 for the identifier
 		if string.find(settings.remoteType, "f") then
-			local hash = DEBUG and `{name}-unreliable` or SHA2.hash224(`{name}{salt}u`)
+			local hash = DEBUG and `{name}-unreliable` or SHA224(buffer.fromstring(name .. "u"), buffer.fromstring(salt))
 			if UsedHashSet[hash] then
 				s = false
 				break
@@ -81,7 +81,7 @@ local function SafeMountNamespace(file: Instance, salt: string, remoteTable: typ
 			end
 		end
 		if string.find(settings.remoteType, "r") then
-			local hash = DEBUG and `{name}-reliable` or SHA2.hash224(`{name}{salt}r`)
+			local hash = DEBUG and `{name}-reliable` or SHA224(buffer.fromstring(name .. "r"), buffer.fromstring(salt))
 			if UsedHashSet[hash] then
 				s = false
 				break
@@ -98,7 +98,7 @@ local function SafeMountNamespace(file: Instance, salt: string, remoteTable: typ
 			end
 		end
 		if string.find(settings.remoteType, "u") then
-			local hash = DEBUG and `{name}-function` or SHA2.hash224(`{name}{salt}u`)
+			local hash = DEBUG and `{name}-function` or SHA224(buffer.fromstring(name .. "f"), buffer.fromstring(salt))
 			if UsedHashSet[hash] then
 				s = false
 				break
