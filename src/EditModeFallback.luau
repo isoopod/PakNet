@@ -60,7 +60,7 @@ local function newDummyRemote<T, V, U..., W...>(settings: types.RemoteSettings<T
 	return self
 end
 
-function dummy.mount(_, _, remoteTable: types.RemoteTable)
+function dummy.Mount(_, _, remoteTable: types.RemoteTable)
 	local remotes: { [string]: any } = setmetatable({}, {
 		-- Only iterate over remotes in GI (This is to ignore Signal if added)
 		__iter = function(self)
