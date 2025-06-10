@@ -1,6 +1,8 @@
 --!strict
 --!optimize 2
 
+if not game:GetService("RunService"):IsRunning() then return require(script.EditModeFallback) :: any end
+
 -- Services
 local RunService = game:GetService("RunService")
 local SharedTableRegistry = game:GetService("SharedTableRegistry")
