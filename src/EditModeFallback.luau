@@ -1,11 +1,10 @@
 --!strict
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Return a dummy version of PakNet in edit mode so tooling can depend on modules using PakNet
 
-local Pack = require(ReplicatedStorage.Packages.Pack)
-local Promise = require(ReplicatedStorage.Packages.Promise)
-local Signal = require(ReplicatedStorage.Packages.Signal)
+local Pack = require(script.Parent.Parent.Pack)
+local Promise = require(script.Parent.Parent.Promise)
+local Signal = require(script.Parent.Parent.Signal)
 local types = require(script.Parent.types)
 
 local dummy = {}
