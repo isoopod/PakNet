@@ -1,7 +1,11 @@
 --!strict
 --!optimize 2
 
-if not game:GetService("RunService"):IsRunning() then return require(script.EditModeFallback) :: any end
+local types = require(script.types)
+if game:GetService("RunService"):IsEdit() then
+	local fallback = require(script.EditModeFallback) :: any
+	return fallback :: types.PakNet
+end
 
 -- Services
 local RunService = game:GetService("RunService")
@@ -12,7 +16,6 @@ local MountNamespace = require(script.MountNamespace)
 local Pack = require(script.Parent.Pack)
 local Server = require(script.Server)
 local Signal = require(script.Parent.Signal)
-local types = require(script.types)
 
 local SALT = string.gsub(game.JobId, "-", ""):upper()
 if SALT == "" then SALT = "00000000000000000000000000000000" end -- For local testing, JobId on server is '' while on client it is a UUID of all 0's
@@ -68,7 +71,7 @@ function PakNet.Mount(_: types.PakNet, file: Instance, RemoteTable: types.Remote
 				return nil
 			end
 		end,
-	})
+	}) :: any
 
 	for name, settings in RemoteTable do
 		local events = eventTable[name]
@@ -177,7 +180,7 @@ function PakNet.__index(self, key)
 	return Pack[key]
 end
 
-local object = setmetatable({
+local object: types.PakNet = setmetatable({
 	-- Redirects some datatype lookups that would go to Pack to PakNet specific datatypes
 	-- These don't need to be lazy-loaded, as PakNet is probably only going to be used on the main thread
 	_redirects = {
@@ -187,4 +190,4 @@ local object = setmetatable({
 	},
 }, PakNet) :: any
 
-return object :: types.PakNet
+return object
