@@ -2,7 +2,7 @@
 --!optimize 2
 
 local types = require(script.types)
-if game:GetService("RunService"):IsEdit() then
+if not game:GetService("RunService"):IsRunning() then
 	local fallback = require(script.EditModeFallback) :: any
 	return fallback :: types.PakNet
 end
