@@ -109,7 +109,7 @@ export type Server<T, V, U..., W...> = {
 	OnEvent: Signal<(Player, T, U...)>,
 	OnRateLimited: Signal<Player>,
 	OnParseError: Signal<Player, string>,
-	OnCheckFail: LemonSignal.Signal<Player>,
+	OnCheckFail: LemonSignal.Signal<Player, string>,
 	OnInvoke: ((player: Player, T, U...) -> (V, W...))?,
 
 	Fire: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (),
@@ -125,7 +125,7 @@ export type Server<T, V, U..., W...> = {
 	Invoke: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (V, W...),
 	InvokeAsync: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> Promise.TypedPromise<(V, W...)>,
 
-	AddSanityCheck: (self: Server<T, V, U..., W...>, check: (player: Player, T, U...) -> boolean) -> (),
+	AddSanityCheck: (self: Server<T, V, U..., W...>, check: (player: Player, T, U...) -> boolean?) -> (),
 }
 
 export type Client<T, V, U..., W...> = {

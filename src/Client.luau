@@ -167,7 +167,7 @@ function Client.InvokeServerAsync<T, V, U..., W...>(self: _Client<T, V, U..., W.
 			return
 		end
 
-		local invokeThread, timeoutThread
+		local invokeThread: thread, timeoutThread: thread
 
 		-- Handle cancellation
 		onCancel(function()

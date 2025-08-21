@@ -6,7 +6,8 @@ sidebar_position: 3
 
 In PakNet, creating remotes involves setting up network modules within `ReplicatedStorage`. These modules return a mounted namespace of remotes that can be accessed and used in your game.
 
-### Creating Remotes
+## Creating Remotes
+
 To create remotes, you'll need to use the `PakNet:Mount` function. This function mounts a remote namespace, where each remote is a key-value pair that represents a remote definition.
 
 ```lua
@@ -20,11 +21,13 @@ PakNet:Mount(file: Instance, namespace: RemoteTable)
 Do not mount multiple namespaces to the same file. This can cause name collisions and break everything — even if the namespaces don't overlap.
 :::
 
-### Organizational Tips:
+### Organizational Tips
+
 - Typically, you'll mount the remote directly to the current script.
 - If you want to create multiple namespaces within a single script for better organization, create folders under the module for each namespace and mount to those.
 
 ### Defining Remotes
+
 A remote table is essentially a map where each key is the remote name, and the value is the remote's definition. To define a remote, use:
 
 ```lua
@@ -116,7 +119,7 @@ return namespace
 :::tip
 When defining a tuple Schema (one with multiple arguments), you have to assert the type as `PakNet.Schema<...>`
 
-When you have complicated data structures, it can be annoying to convert them into standard types.   
+When you have complicated data structures, it can be annoying to convert them into standard types.
 You can copy the definition inside the function and surround it in `typeof()` instead of writing it out with types as well.
 
 ```lua
@@ -128,6 +131,7 @@ You can copy the definition inside the function and surround it in `typeof()` in
     Level = PakNet.UByte,
 }), typeof(PakNet.Int)>
 ```
+
 :::
 
 How you organize namespaces is up to you. You might want to create a centralized network module with all remotes inside it, or you might want to create multiple network modules for different things.
@@ -136,7 +140,8 @@ How you organize namespaces is up to you. You might want to create a centralized
 
 Remotes in PakNet have a unified API that combines both server and client functionality. Some changes have been made to the API to simplify naming conventions and add new features.
 
-### Key Changes:
+### Key Changes
+
 - **Unified API**: Server and client remote methods are combined. For example:
   - `FireClient` is now just `Fire`.
   - `OnServerEvent` is now `OnEvent`.
@@ -144,7 +149,7 @@ Remotes in PakNet have a unified API that combines both server and client functi
   The names on the client side remain the same.
 
 - **New Features**:
-  - **Server-only additions**: 
+  - **Server-only additions**:
     - **Sanity Checks**: Allows directly linking sanity checks to the remote through `AddSanityCheck`.
     - `FireList` and `FireExcept`: Variants of the `Fire` method.
     - `OnCheckFail`: Fires when an incoming packet fails the sanity checks.
@@ -156,19 +161,21 @@ Remotes in PakNet have a unified API that combines both server and client functi
   
 - **Unreliable Variants**: All `Fire` methods have unreliable variants that use a `UnreliableRemoteEvent` instead of a `RemoteEvent`.
 
-### Access Based on Remote Type:
+### Access Based on Remote Type
+
 The parts of the API you can use depend on whether you’re on the server or client and the remote's type. Here’s a breakdown:
 
-- **"f" (Functions)**: 
+- **"f" (Functions)**:
   - Unlocks `OnInvoke`, `OnClientInvoke`, `Invoke`, `InvokeAsync`, `InvokeServer`, and `InvokeServerAsync`.
   
-- **"r" (Remote)**: 
+- **"r" (Remote)**:
   - Unlocks `OnEvent`, `OnClientEvent`, `Fire`, `FireAll`, `FireList`, `FireExcept`, and `FireServer`.
   
-- **"u" (Unreliable)**: 
+- **"u" (Unreliable)**:
   - Unlocks `OnEvent`, `OnClientEvent`, `FireUnreliable`, `FireAllUnreliable`, `FireListUnreliable`, `FireExceptUnreliable`, and `FireServerUnreliable`.
 
-### Common Access:
+### Common Access
+
 - **Server** always has access to the `OnParseError` event.
 - **Both server and client** always have access to the `OnRateLimited` event and the `ClassName` property (which indicates whether the current context is "Server" or "Client").
 
@@ -226,9 +233,10 @@ end
 ```
 
 ### Bulk Protection
+
 Setting up `OnRateLimited` and other security events individually for each remote can quickly become tedious. Instead, you can apply protections to an entire namespace at once by iterating over it.  
 
-When iterating a mounted namespace, only remotes are returned — so you don't need to worry about filtering out extra entries like `Signal`.
+When iterating a mounted namespace, only remotes are returned — you don't need to worry about filtering out extra entries like `Signal`.
 
 ```lua title="BulkProtection.server.luau"
 local network = require(game:GetService("ReplicatedStorage"):WaitForChild("networkExample"))
@@ -244,7 +252,8 @@ for name, remote in network do
         player:Kick("Sent invalid packet")
     end)
 
-    remote.OnCheckFail:Connect(function(player)
+    remote.OnCheckFail:Connect(function(player, error)
+        warn(`{player} Triggered a sanity check for {name}: {error}`)
         player:Kick("Tripped a sanity check")
     end)
 end

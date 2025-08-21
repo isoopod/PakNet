@@ -50,9 +50,10 @@ function Server._DoChecks<T, V, U..., W...>(self: _Server<T, V, U..., W...>, pla
 	local passed = true
 
 	for i = 1, self._nChecks do
-		if not self._sanityChecks[i](player, ...) then
+		local success, status: boolean | string = pcall(self._sanityChecks[i], player, ...)
+		if not success or status == false then
 			passed = false
-			self.OnCheckFail:Fire(player)
+			self.OnCheckFail:Fire(player, not success and status :: string or "Check returned false")
 			break
 		end
 	end
@@ -222,7 +223,6 @@ function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Pl
 		finished = true
 
 		if not self:_DoChecks(to, unpack(result)) then
-			self.OnCheckFail:Fire(to)
 			warn("Value returned by InvokeClient did not pass all sanity tests")
 			result = nil
 		end
@@ -295,7 +295,7 @@ function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, t
 			return
 		end
 
-		local invokeThread, timeoutThread
+		local invokeThread: thread, timeoutThread: thread
 
 		-- Handle cancellation
 		onCancel(function()
@@ -316,10 +316,7 @@ function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, t
 				reject(`Parse error for {to}: {result}`)
 			end
 
-			if not self:_DoChecks(to, unpack(result)) then
-				self.OnCheckFail:Fire(to)
-				reject("Value returned by InvokeClient did not pass all sanity tests")
-			end
+			if not self:_DoChecks(to, unpack(result)) then reject("Value returned by InvokeClient did not pass all sanity tests") end
 
 			pcall(task.cancel, timeoutThread)
 			resolve(table.unpack(result))
@@ -346,10 +343,14 @@ end
 	@param check (player: Player, ...any) -> boolean
 	Directly attaches a sanity check to the remote, that will be checked before firing the OnEvent signal. 
 	You can use this to avoid repeating input validation when you want to connect to the event in multiple places.
+	Multiple sanity checks can be added to the same remote.
 
+	The check is considered to be failed if it returns false or throws an error. If throwing an error, the error will be passed to the `OnCheckFail` signal.
+	This lets you use assertions in your sanity checks, as they will be caught and handled by PakNet. True does not need to be explicitly returned.
+	
 	Sanity checks are also called for the return value of invokes.
 ]=]
-function Server.AddSanityCheck<T, V, U..., W...>(self: _Server<T, V, U..., W...>, check: (player: Player, T, U...) -> ())
+function Server.AddSanityCheck<T, V, U..., W...>(self: _Server<T, V, U..., W...>, check: (player: Player, T, U...) -> boolean?)
 	table.insert(self._sanityChecks, check)
 	self._nChecks += 1
 end
@@ -403,7 +404,7 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	--[=[
 		@prop OnCheckFail Signal
 		@within Server
-		A signal that fires when a sanity check attached to the remote fails. Sends the player which sent the packet that failed the check.
+		A signal that fires when a sanity check attached to the remote fails. Sends the player which sent the packet that failed the check, as well as the error message.
 	]=]
 	self.OnCheckFail = Signal.new()
 
