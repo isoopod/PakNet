@@ -34,22 +34,31 @@ A remote table is essentially a map where each key is the remote name, and the v
 PakNet:DefineRemote(settings: RemoteSettings)
 ```
 
-The `RemoteSettings` is a dictionary with the following fields:
+`RemoteSettings` is a dictionary with the following fields:
 
-- **params** *(required)*: A PakNet schema that defines the parameters for the remote.
-- **returns** *(required for remote functions only)*: A PakNet schema that defines the return values for the remote function.
-- **remoteType** *(required)*: Specifies the type of remote. It can be any combination of the following:
-  - **"f"**: RemoteFunction
-  - **"r"**: RemoteEvent
-  - **"u"**: UnreliableRemoteEvent
-  - Combinations like **"fr"**, **"fu"**, **"ru"**, and **"fru"** can also be used for remotes that have multiple types (e.g., a remote that is both a RemoteFunction and a RemoteEvent, also note that it is always written in alphabetical order).
+**params** *(required)*
+A PakNet schema that defines the parameters for the remote.
 
-- **rateLimit** *(optional)*: A table that specifies rate limiting for the remote.
-  - **global**: Boolean indicating whether the rate limit applies globally or per player.
-  - **limit**: The maximum number of requests allowed within a specified window.
-  - **window**: The duration in seconds that defines the rate limit window.
+**returns** *(required for remote functions only)*
+A PakNet schema that defines the return values for the remote function.
 
-- **timeout** *(optional)*: A number specifying the timeout duration (in seconds) for remote functions.
+**remoteType** *(required)*
+A string specifying the type of remote. Valid values:
+
+- `"f"` – RemoteFunction
+- `"r"` – RemoteEvent
+- `"u"` – UnreliableRemoteEvent
+- Combinations are allowed (e.g. `"fr"`, `"fu"`, `"ru"`, `"fru"`). The letters must always appear in alphabetical order.
+
+**rateLimit** *(optional)*
+A table that specifies rate limiting for the remote.
+
+- `global` (boolean): If true, the limit applies globally. If false or omitted, it applies per player.
+- `limit` (number): Maximum number of requests allowed within the window.
+- `window` (number): Duration of the window in seconds.
+
+**timeout** *(optional)*
+A number (seconds) specifying the timeout for remote functions. If exceeded, the call is cancelled and returns `nil`.
 
 ```lua title="networkExample.luau"
 local PakNet = require(path.to.PakNet)
@@ -93,7 +102,7 @@ local namespace = PakNet:Mount(script, {
         -- Heres an example of a more complex schema
         params = PakNet:Schema(PakNet.Dictionary({
             Name = PakNet.String16,
-            Level = PakNet.UByte,
+            Level = PakNet.UInt,
             CFrame = PakNet.CFrame,
             Buildings = PakNet.Map(PakNet.Vector3, PakNet.Instance),
         })),
@@ -138,70 +147,78 @@ How you organize namespaces is up to you. You might want to create a centralized
 
 ## Using Remotes
 
-Remotes in PakNet have a unified API that combines both server and client functionality. Some changes have been made to the API to simplify naming conventions and add new features.
+Remotes in PakNet have a unified API that combines both server and client functionality. There are some deviations to the RemoteEvent/RemoteFunction API to simplify naming conventions and add new features.
 
 ### Key Changes
 
-- **Unified API**: Server and client remote methods are combined. For example:
-  - `FireClient` is now just `Fire`.
-  - `OnServerEvent` is now `OnEvent`.
-  
-  The names on the client side remain the same.
+**Unified API**  
+Remote methods for server and client are now combined under consistent names:
 
-- **New Features**:
-  - **Server-only additions**:
-    - **Sanity Checks**: Allows directly linking sanity checks to the remote through `AddSanityCheck`.
-    - `FireList` and `FireExcept`: Variants of the `Fire` method.
-    - `OnCheckFail`: Fires when an incoming packet fails the sanity checks.
-    - `OnParseError`: Fires when an incoming packet fails to deserialize.
-  - **Async Methods**: Both server and client have:
-    - `InvokeAsync` (on the client, it's called `InvokeServerAsync`): A non-blocking version of `Invoke` that returns a Promise.
-  - **Rate Limiting**:
-    - `OnRateLimited` event: Triggers when a player is rate-limited.
-  
-- **Unreliable Variants**: All `Fire` methods have unreliable variants that use a `UnreliableRemoteEvent` instead of a `RemoteEvent`.
+- `FireClient` → `Fire`
+- `OnServerEvent` → `OnEvent`
+  (Client-side names remain unchanged.)
+
+**Server-only additions**  
+
+- `AddSanityCheck`: Attach sanity checks directly to a remote.
+- `FireList`: Send to a list of players.
+- `FireExcept`: Send to all players except the given ones.
+- `OnCheckFail`: Triggered when a packet fails sanity checks.
+- `OnParseError`: Triggered when a packet cannot be deserialized.
+
+**Async methods**  
+Available on both server and client:
+
+- `InvokeAsync` (server)
+- `InvokeServerAsync` (client)
+  These are non-blocking versions of `Invoke` and return a Promise.
+
+**Rate limiting**  
+
+- `OnRateLimited`: Triggered when a player exceeds the configured limit.
+
+**Unreliable variants**  
+All `Fire` methods have unreliable counterparts that use `UnreliableRemoteEvent` instead of `RemoteEvent`.
 
 ### Access Based on Remote Type
 
-The parts of the API you can use depend on whether you’re on the server or client and the remote's type. Here’s a breakdown:
+The parts of the API you can use depend on whether you’re on the server or client and the Remote's type.
 
-- **"f" (Functions)**:
-  - Unlocks `OnInvoke`, `OnClientInvoke`, `Invoke`, `InvokeAsync`, `InvokeServer`, and `InvokeServerAsync`.
+**"f" (Functions)**  
+
+- `OnInvoke` The server-side callback that will run when a client invokes the server.
+- `OnClientInvoke` The client-side callback that will run when the server invokes a client.
+- `Invoke` Invokes a client from the server.
+- `InvokeAsync` Promisified version of `Invoke`.
+- `InvokeServer` Invokes the server from a client.
+- `InvokeServerAsync` Promisified version of `InvokeServer`.
+
+**"r" (Remote)**  
+
+- `OnEvent` Server-side signal.
+- `OnClientEvent` Client-side signal.
+- `Fire` Fires from the server to a single player.
+- `FireAll` Fires from the server to all players.
+- `FireList` Fires from the server to a list of players.
+- `FireExcept` Fires from the server to all players except those in the list.
+- `FireServer` Fires from the client to the server.
   
-- **"r" (Remote)**:
-  - Unlocks `OnEvent`, `OnClientEvent`, `Fire`, `FireAll`, `FireList`, `FireExcept`, and `FireServer`.
-  
-- **"u" (Unreliable)**:
-  - Unlocks `OnEvent`, `OnClientEvent`, `FireUnreliable`, `FireAllUnreliable`, `FireListUnreliable`, `FireExceptUnreliable`, and `FireServerUnreliable`.
+**"u" (Unreliable)**  
+
+- `OnEvent` Server-side signal.
+- `OnClientEvent` Client-side signal.
+- `FireUnreliable` Fires unreliably from the server to a single player.
+- `FireAllUnreliable` Fires unreliably from the server to all players.
+- `FireListUnreliable` Fires unreliably from the server to a list of players.
+- `FireExceptUnreliable` Fires unreliably from the server to all players except those in the list.
+- `FireServerUnreliable` Fires unreliably from the client to the server.
 
 ### Common Access
 
-- **Server** always has access to the `OnParseError` event.
+- **Server** always has access to the `OnParseError` and `OnCheckFailed` events.
 - **Both server and client** always have access to the `OnRateLimited` event and the `ClassName` property (which indicates whether the current context is "Server" or "Client").
 
-```lua title="Example.client.luau"
-local network = require(game:GetService("ReplicatedStorage"):WaitForChild("networkExample"))
-
-network.SomeRemoteEvent:FireServer("Hello World!")
-
--- Send SomeUnreliableEvent faster than the rate limit
-network.SomeUnreliableEvent.OnRateLimited:Connect(function()
-    print("Rate Limited")
-    -- >>> Rate Limited (x40)
-end)
-
-for i = 1, 100 do
-    network.SomeUnreliableEvent:FireServerUnreliable(i, Vector3.new(i, i, i))
-end
-
-print(network.SomeRemoteFunction:InvokeServer({
-    Name = "Bob",
-    Level = 9001,
-    CFrame = CFrame.identity,
-    Buildings = {},
-}))
--- >>> 9001
-```
+---
 
 ```lua title="Example.server.luau"
 local network = require(game:GetService("ReplicatedStorage"):WaitForChild("networkExample"))
@@ -218,7 +235,7 @@ network.SomeUnreliableEvent.OnEvent:Connect(function(num, vector)
     -- >>> 1 ... 60
 end)
 
-network.SomeRemoteFunction.OnInvoke = function(player, data)
+network.SomeEverythingEvent.OnInvoke = function(player, data)
     print(data)
     --[[ >>>{
                 ["Buildings"] = {},
@@ -230,6 +247,30 @@ network.SomeRemoteFunction.OnInvoke = function(player, data)
     
     return data.Level
 end
+```
+
+```lua title="Example.client.luau"
+local network = require(game:GetService("ReplicatedStorage"):WaitForChild("networkExample"))
+
+network.SomeRemoteEvent:FireServer("Hello World!")
+
+-- Send SomeUnreliableEvent faster than the rate limit
+network.SomeUnreliableEvent.OnRateLimited:Connect(function()
+    print("Rate Limited")
+    -- >>> Rate Limited (x40)
+end)
+
+for i = 1, 100 do
+    network.SomeUnreliableEvent:FireServerUnreliable(i, Vector3.new(i, i, i))
+end
+
+print(network.SomeEverythingEvent:InvokeServer({
+    Name = "Bob",
+    Level = 9001,
+    CFrame = CFrame.identity,
+    Buildings = {},
+}))
+-- >>> 9001
 ```
 
 ### Bulk Protection
