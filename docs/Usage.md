@@ -36,13 +36,13 @@ PakNet:DefineRemote(settings: RemoteSettings)
 
 `RemoteSettings` is a dictionary with the following fields:
 
-**params** *(required)*
+**params** *(required)*  
 A PakNet schema that defines the parameters for the remote.
 
-**returns** *(required for remote functions only)*
+**returns** *(required for remote functions only)*  
 A PakNet schema that defines the return values for the remote function.
 
-**remoteType** *(required)*
+**remoteType** *(required)*  
 A string specifying the type of remote. Valid values:
 
 - `"f"` – RemoteFunction
@@ -50,14 +50,14 @@ A string specifying the type of remote. Valid values:
 - `"u"` – UnreliableRemoteEvent
 - Combinations are allowed (e.g. `"fr"`, `"fu"`, `"ru"`, `"fru"`). The letters must always appear in alphabetical order.
 
-**rateLimit** *(optional)*
+**rateLimit** *(optional)*  
 A table that specifies rate limiting for the remote.
 
 - `global` (boolean): If true, the limit applies globally. If false or omitted, it applies per player.
 - `limit` (number): Maximum number of requests allowed within the window.
 - `window` (number): Duration of the window in seconds.
 
-**timeout** *(optional)*
+**timeout** *(optional)*  
 A number (seconds) specifying the timeout for remote functions. If exceeded, the call is cancelled and returns `nil`.
 
 ```lua title="networkExample.luau"
