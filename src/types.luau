@@ -161,6 +161,6 @@ export type PakNet = {
 local PakNetTypes = {}
 
 PakNetTypes.cfg = Pack:GetConfig()
-PakNetTypes.DEBUG = ((RunService:IsStudio() or not PakNetTypes.cfg.debug.onlyInStudio) and PakNetTypes.cfg.debug.enabled)
+PakNetTypes.DEBUG = PakNetTypes.cfg.debug.enabled and (not PakNetTypes.cfg.debug.onlyInStudio or RunService:IsStudio())
 
 return PakNetTypes
