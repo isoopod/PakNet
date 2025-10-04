@@ -9,7 +9,6 @@ end
 
 -- Services
 local RunService = game:GetService("RunService")
-local SharedTableRegistry = game:GetService("SharedTableRegistry")
 -- Modules
 local Client = require(script.Client)
 local MountNamespace = require(script.MountNamespace)
@@ -23,8 +22,7 @@ if SALT == "" then SALT = "00000000000000000000000000000000" end -- For local te
 local IS_SERVER = RunService:IsServer()
 local SHOULD_SEARCH = not IS_SERVER or script:GetActor() ~= nil -- Search for remotes if not on the main server environment
 
-local PACK_CONFIG = SharedTableRegistry:GetSharedTable("PACK_CONFIG")
-local DEBUG = PACK_CONFIG.__DEBUG__ == true
+local DEBUG = types.DEBUG
 
 local MountedFileSet = (DEBUG and {}) :: { [Instance]: boolean }
 
@@ -171,7 +169,7 @@ function PakNet.LoadGlobalSignal(_: types.PakNet): (identifier: string) -> Signa
 	end
 end
 
-function PakNet.__index(self, key)
+function PakNet.__index(self, key: any)
 	if PakNet[key] then return PakNet[key] end
 
 	local redirects = rawget(self, "_redirects") :: { [string]: any }

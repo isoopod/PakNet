@@ -1,4 +1,5 @@
 --!strict
+local RunService = game:GetService("RunService")
 
 local LemonSignal = require(script.Parent.Parent.Signal)
 local Pack = require(script.Parent.Parent.Pack)
@@ -157,4 +158,9 @@ export type PakNet = {
 	Ref: any,
 } & Pack.Datatypes
 
-return nil
+local PakNetTypes = {}
+
+PakNetTypes.cfg = Pack:GetConfig()
+PakNetTypes.DEBUG = ((RunService:IsStudio() or not PakNetTypes.cfg.debug.onlyInStudio) and PakNetTypes.cfg.debug.enabled)
+
+return PakNetTypes
