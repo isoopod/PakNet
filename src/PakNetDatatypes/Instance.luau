@@ -4,6 +4,8 @@
 
 local Pack = require(script.Parent.Parent.Parent.Pack)
 
+local Writer = Pack:GetWriter()
+
 local datatype = table.freeze({
 	Eval = "Instance",
 	Read = function(reader: Pack.ReaderData): any
@@ -13,7 +15,7 @@ local datatype = table.freeze({
 	end,
 	Write = function(writer: Pack.WriterData, value: any)
 		if typeof(value) ~= "Instance" then error(`Instance expected. Got {typeof(value)}`) end
-		Pack.Writer.addRef(writer, value)
+		Writer.addRef(writer, value)
 	end,
 }) :: Pack.DatatypeInterface<any>
 
