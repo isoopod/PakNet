@@ -25,7 +25,7 @@ type _Client<T, V, U..., W...> = types.Client<T, V, U..., W...> & {
 Client.ClassName = "Client"
 
 local function concatArgs(...)
-	local res = {}
+	local res: { string } = {}
 	for _, v in { ... } do
 		table.insert(res, tostring(v))
 	end

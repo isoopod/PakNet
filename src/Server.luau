@@ -20,7 +20,7 @@ type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 	_returns: types.Schema<V, W...>?,
 	_timeout: number?,
 	_ratelimit: Ratelimit.RateLimit?,
-	_sanityChecks: { (player: Player, T, U...) -> boolean },
+	_sanityChecks: { (player: Player, T, U...) -> boolean? },
 	_nChecks: number,
 
 	_RateLimited: (self: any, player: Player) -> boolean,
@@ -30,7 +30,7 @@ type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 Server.ClassName = "Server"
 
 local function concatArgs(...)
-	local res = {}
+	local res: { string } = {}
 	for _, v in { ... } do
 		table.insert(res, tostring(v))
 	end
