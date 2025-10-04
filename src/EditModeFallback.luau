@@ -9,10 +9,48 @@ local types = require(script.Parent.types)
 
 local dummy = {}
 
-local function newDummyRemote<T, V, U..., W...>(settings: types.RemoteSettings<T, V, U..., W...>)
-	local self = {}
+local meta = {}
+function meta.AddSanityCheck() end
+function meta.InvokeAsync(self: any)
+	return Promise.new(function(_, reject, onCancel)
+		-- Timeout handling
+		if self._timeout then
+			local timeoutThread
 
-	self.ClassName = "Server"
+			-- Handle cancellation
+			onCancel(function()
+				pcall(task.cancel, timeoutThread)
+			end)
+
+			timeoutThread = task.delay(self._timeout :: any, function()
+				reject(`Invoke timed out after {self._timeout} seconds.`)
+			end)
+		end
+	end)
+end
+function meta.Invoke(self: any)
+	local thread = coroutine.running()
+
+	if self._timeout then task.delay(self._timeout :: any, function()
+		task.spawn(thread)
+	end) end
+
+	coroutine.yield()
+	return nil, nil
+end
+function meta.FireExceptUnreliable() end
+function meta.FireAllUnreliable() end
+function meta.FireListUnreliable() end
+function meta.FireUnreliable() end
+function meta.FireExcept() end
+function meta.FireAll() end
+function meta.FireList() end
+function meta.Fire() end
+
+meta.ClassName = "Server"
+
+local function newDummyRemote<T, V, U..., W...>(settings: types.RemoteSettings<T, V, U..., W...>)
+	local self = setmetatable({}, { __index = meta })
 
 	self.OnEvent = Signal.new()
 
@@ -20,42 +58,7 @@ local function newDummyRemote<T, V, U..., W...>(settings: types.RemoteSettings<T
 	self.OnParseError = Signal.new()
 	self.OnCheckFail = Signal.new()
 
-	function self.AddSanityCheck() end
-	function self.InvokeAsync()
-		return Promise.new(function(_, reject, onCancel)
-			-- Timeout handling
-			if settings.timeout then
-				local timeoutThread
-
-				-- Handle cancellation
-				onCancel(function()
-					pcall(task.cancel, timeoutThread)
-				end)
-
-				timeoutThread = task.delay(settings.timeout, function()
-					reject(`Invoke timed out after {settings.timeout} seconds.`)
-				end)
-			end
-		end)
-	end
-	function self.Invoke()
-		local thread = coroutine.running()
-
-		if settings.timeout then task.delay(settings.timeout, function()
-			task.spawn(thread)
-		end) end
-
-		coroutine.yield()
-		return nil, nil
-	end
-	function self.FireExceptUnreliable() end
-	function self.FireAllUnreliable() end
-	function self.FireListUnreliable() end
-	function self.FireUnreliable() end
-	function self.FireExcept() end
-	function self.FireAll() end
-	function self.FireList() end
-	function self.Fire() end
+	self._timeout = settings.timeout
 
 	return self
 end
@@ -100,7 +103,7 @@ function dummy.LoadGlobalSignal()
 end
 
 -- Retain standard Pack integration so schemas dont error
-function dummy.__index(self, key)
+function dummy.__index(self, key: any)
 	if dummy[key] then return dummy[key] end
 
 	local redirects = rawget(self, "_redirects") :: { [string]: any }
