@@ -1,7 +1,7 @@
 [package]
 name = "isoopod/paknet"
 description = "Schematized networking library."
-version = "0.6.0"
+version = "0.6.1"
 license = "MIT"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
