@@ -15,7 +15,6 @@
 --]]
 
 --!optimize 2
---!strict
 
 -- Type inference was breaking here so there are a bunch of seemingly out of place :any types where there should be numbers
 

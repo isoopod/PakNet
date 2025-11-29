@@ -1,4 +1,3 @@
---!strict
 
 -- Return a dummy version of PakNet in edit mode so tooling can depend on modules using PakNet
 
