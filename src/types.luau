@@ -47,6 +47,25 @@ export type RateLimitSettings = {
 }
 
 --[=[
+	@interface CompressionSettings
+	@within RemoteSettings
+	.algorithm Enum.CompressionAlgorithm -- The algorithm to use for compression (e.g. Zstd)
+	.compressionLevel: number? -- The compression level to use. Default 1.
+	Applies configurable compression to the packet before sending it.
+
+	Compression level ranges:
+	* Zstd: [-7–22]
+
+	If no CompressionSettings are provided, PakNet will only apply the default remote compression.
+
+	For the most up to date documentation on compression, refer to [EncodingService:CompressBuffer](https://create.roblox.com/docs/reference/engine/classes/EncodingService#CompressBuffer)
+]=]
+export type CompressionSettings = {
+	algorithm: Enum.CompressionAlgorithm,
+	compressionLevel: number?,
+}
+
+--[=[
 	@class RemoteSettings
 	@external Schema https://isoopod.github.io/Pack/api/Schema
 	Defines the structure for creating a Remote in PakNet. Remotes are created using `PakNet.defineRemote` within a `RemoteTable`, which is then mounted to a namespace using `PakNet.mount`.  
@@ -72,7 +91,10 @@ export type RateLimitSettings = {
 --- @prop remoteType RemoteType
 --- @within RemoteSettings
 
---- @prop rateLimit RateLimitSetting?
+--- @prop rateLimit RateLimitSettings?
+--- @within RemoteSettings
+
+--- @prop compression CompressionSetting?
 --- @within RemoteSettings
 
 --- @prop timeout number?
@@ -82,6 +104,7 @@ export type RemoteSettings<T, V, U..., W...> = {
 	returns: Pack.Schema<V, W...>?,
 	remoteType: RemoteType,
 	rateLimit: RateLimitSettings?,
+	compression: CompressionSettings?,
 	timeout: number?,
 }
 

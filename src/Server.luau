@@ -1,6 +1,7 @@
 --!optimize 2
 
 -- Services
+local EncodingService = game:GetService("EncodingService")
 local Players = game:GetService("Players")
 -- Modules
 local Promise = require(script.Parent.Parent.Promise)
@@ -18,6 +19,7 @@ type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
 	_params: types.Schema<T, U...>,
 	_returns: types.Schema<V, W...>?,
 	_timeout: number?,
+	_compression: types.CompressionSettings?,
 	_ratelimit: Ratelimit.RateLimit?,
 	_sanityChecks: { (player: Player, T, U...) -> boolean? },
 	_nChecks: number,
@@ -69,6 +71,8 @@ function Server.Fire<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Play
 
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {concatArgs(...)}`) end
+
+	if self._compression then packet = EncodingService:CompressBuffer(packet, self._compression.algorithm, self._compression.compressionLevel) end
 
 	self._events.r:FireClient(to, packet, refs)
 end
@@ -124,6 +128,8 @@ function Server.FireUnreliable<T, V, U..., W...>(self: _Server<T, V, U..., W...>
 
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding unreliable packet for transmission: {packet}\nArguments: {v1}, {concatArgs(...)}`) end
+
+	if self._compression then packet = EncodingService:CompressBuffer(packet, self._compression.algorithm, self._compression.compressionLevel) end
 
 	self._events.u:FireClient(to, packet, refs)
 end
@@ -210,6 +216,8 @@ function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Pl
 	local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, ...)
 	if not s then error(`[PAKNET]: Error encoding packet for transmission: {packet}\nArguments: {v1}, {concatArgs(...)}`) end
 
+	if self._compression then packet = EncodingService:CompressBuffer(packet, self._compression.algorithm, self._compression.compressionLevel) end
+
 	local result, returnRefs
 	local finished = false
 
@@ -252,13 +260,21 @@ function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Pl
 
 	if result == nil then return nil, nil :: any end
 
+	if self._compression then
+		s, result = pcall(EncodingService.DecompressBuffer, EncodingService, result, self._compression.algorithm)
+		if not s then
+			self.OnParseError:Fire(to, result)
+			error(`[PAKNET]: Error decompressing invoke return with custom compression: {result}`)
+		end
+	end
+
 	assert(self._returns, "[PAKNET]: Remote function missing `returns` field.")
 	local s2, result2 = pcall(function()
 		return { self._returns:Read(result, returnRefs) }
 	end)
 
 	if not s2 then
-		self.OnParseError:Fire(to, unpack(result2) :: any)
+		self.OnParseError:Fire(to, result2 :: any)
 		error(`Parse error for {to}: {result}`)
 	end
 
@@ -288,11 +304,13 @@ function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, t
 	local vararg = { ... }
 
 	return Promise.new(function(resolve, reject, onCancel)
-		local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, unpack(vararg))
+		local s, packet: buffer, refs: { any } = pcall(self._params.Write, self._params, v1, unpack(vararg) :: any)
 		if not s then
 			reject(`Error encoding packet for transmission: {packet}\nArguments: {v1}, {concatArgs(unpack(vararg))}`)
 			return
 		end
+
+		if self._compression then packet = EncodingService:CompressBuffer(packet, self._compression.algorithm, self._compression.compressionLevel) end
 
 		local invokeThread: thread, timeoutThread: thread
 
@@ -306,13 +324,23 @@ function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, t
 		invokeThread = task.spawn(function()
 			local packet2, returnRefs = self._events.f:InvokeClient(to, packet, refs)
 
+			if self._compression then
+				s, packet2 = pcall(EncodingService.DecompressBuffer, EncodingService, packet2, self._compression.algorithm)
+				if not s then
+					self.OnParseError:Fire(to, packet2 :: any)
+					reject(`Error decompressing invoke return with custom compression: {packet2}`)
+					return
+				end
+			end
+
 			local s2, result = pcall(function()
 				return { self._returns:Read(packet2, returnRefs) }
 			end)
 
 			if not s2 then
-				self.OnParseError:Fire(to, unpack(result) :: any)
+				self.OnParseError:Fire(to, result :: any)
 				reject(`Parse error for {to}: {result}`)
+				return
 			end
 
 			if not self:_DoChecks(to, unpack(result)) then reject("Value returned by InvokeClient did not pass all sanity tests") end
@@ -373,6 +401,7 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	self._params = settings.params
 	self._returns = settings.returns
 	self._timeout = settings.timeout
+	self._compression = settings.compression
 	self._sanityChecks = {}
 	self._nChecks = 0
 
@@ -405,7 +434,7 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 		@within Server
 		A signal that fires when a sanity check attached to the remote fails. Sends the player which sent the packet that failed the check, as well as the error message.
 	]=]
-	self.OnCheckFail = Signal.new()
+	self.OnCheckFail = Signal.new() :: any
 
 	--[=[
 		@prop OnInvoke ((player: Player, any...) -> (any...))?
@@ -430,13 +459,22 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	if settings.rateLimit then self._ratelimit = Ratelimit.new(settings.rateLimit) end
 
 	local function parsePacket(player, buff, refs): ...any
-		local s, result = pcall(function()
+		local s, result
+		if self._compression then
+			s, buff = pcall(EncodingService.DecompressBuffer, EncodingService, buff, self._compression.algorithm)
+			if not s then
+				self.OnParseError:Fire(player, buff)
+				error(`[PAKNET]: Error decompressing packet with custom compression: {buff}`)
+			end
+		end
+
+		s, result = pcall(function()
 			return { self._params:Read(buff, refs) }
 		end)
 
 		if not s then
-			self.OnParseError:Fire(player, unpack(result) :: any)
-			error(`Parse error for {player}: {result}`)
+			self.OnParseError:Fire(player, result :: any)
+			error(`[PAKNET]: Parse error for {player}: {result}`)
 		end
 
 		return unpack(result)
@@ -445,11 +483,19 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	if self._events.f then
 		self._events.f.OnServerInvoke = function(player: Player, buff, refs)
 			if self.OnInvoke and not self:_RateLimited(player) then
+				if self._compression then
+					local s
+					s, buff = pcall(EncodingService.DecompressBuffer, EncodingService, buff, self._compression.algorithm)
+					if not s then error(`[PAKNET]: Error decompressing packet with custom compression: {buff}`) end
+				end
+
 				local returns = { self.OnInvoke(player, parsePacket(player, buff, refs)) }
 
 				assert(self._returns, "[PAKNET]: Remote function missing `returns` field.")
-				local s, packet: buffer, returnRefs: { any } = pcall(self._returns.Write, self._returns, unpack(returns))
+				local s, packet: buffer, returnRefs: { any } = pcall(self._returns.Write, self._returns, unpack(returns) :: any)
 				if not s then error(`[PAKNET]: Error encoding return packet for transmission: {packet}\nArguments: {concatArgs(unpack(returns))}`) end
+
+				if self._compression then packet = EncodingService:CompressBuffer(packet, self._compression.algorithm, self._compression.compressionLevel) end
 
 				return packet, returnRefs
 			end
