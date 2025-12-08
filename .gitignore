@@ -5,10 +5,10 @@
 # Roblox Studio lock files
 /*.rbxl.lock
 
-/wally.lock
-/sourcemap.json
-/DevPackages
-/Packages
+sourcemap.json
 node_modules
 package-lock.json
 package.json
+
+.pesde
+*_packages

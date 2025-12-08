@@ -1,7 +1,7 @@
 {
   "name": "PakNet",
   "tree": {
-    "$path": "Packages",
+    "$path": "roblox_packages",
     "PakNet": {
       "$path": "src"
     },

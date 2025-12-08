@@ -2,6 +2,7 @@
 
 -- Services
 local EncodingService = game:GetService("EncodingService")
+local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 -- Modules
 local types = require(script.Parent.types)
@@ -61,7 +62,7 @@ local function SafeMountNamespace(file: Instance, salt: string, remoteTable: typ
 		-- Create the needed instnaces for this Remote
 		-- See the SHA2 module for why we use SHA224 for the identifier
 		if string.find(settings.remoteType, "f") then
-			local hash = DEBUG and `{name}-function` or EncodingService:ComputeStringHash(`{name}f{salt}`, Enum.HashAlgorithm.Blake3)
+			local hash = DEBUG and `{name}-function` or HttpService:UrlEncode(EncodingService:ComputeStringHash(`{name}f{salt}`, Enum.HashAlgorithm.Blake3))
 			if UsedHashSet[hash] then
 				s = false
 				break
@@ -78,7 +79,7 @@ local function SafeMountNamespace(file: Instance, salt: string, remoteTable: typ
 			end
 		end
 		if string.find(settings.remoteType, "r") then
-			local hash = DEBUG and `{name}-reliable` or EncodingService:ComputeStringHash(`{name}r{salt}`, Enum.HashAlgorithm.Blake3)
+			local hash = DEBUG and `{name}-reliable` or HttpService:UrlEncode(EncodingService:ComputeStringHash(`{name}r{salt}`, Enum.HashAlgorithm.Blake3))
 			if UsedHashSet[hash] then
 				s = false
 				break
@@ -95,7 +96,7 @@ local function SafeMountNamespace(file: Instance, salt: string, remoteTable: typ
 			end
 		end
 		if string.find(settings.remoteType, "u") then
-			local hash = DEBUG and `{name}-unreliable` or EncodingService:ComputeStringHash(`{name}u{salt}`, Enum.HashAlgorithm.Blake3)
+			local hash = DEBUG and `{name}-unreliable` or HttpService:UrlEncode(EncodingService:ComputeStringHash(`{name}u{salt}`, Enum.HashAlgorithm.Blake3))
 			if UsedHashSet[hash] then
 				s = false
 				break

@@ -5,12 +5,11 @@
 
     "ReplicatedStorage": {
       "Packages": {
-        "$path": "Packages",
+        "$path": "roblox_packages",
         "PakNet": {
           "$path": "src"
         }
       }
-      
     }
   }
 }
