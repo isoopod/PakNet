@@ -56,7 +56,7 @@ jobs:
           pesde_token: "${{ secrets.PESDE_TOKEN || github.token }}"
 
       - name: Build
-        run: rojo build build.project.json --o Pack.rbxm
+        run: rojo build build.project.json --output Pack.rbxm
 
       - name: Read changelog
         id: read_changelog
