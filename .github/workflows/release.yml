@@ -39,12 +39,6 @@ jobs:
           path: ./pesde.toml
           version: ${{ steps.get_version.outputs.version }}
 
-      - name: Bump wally version
-        uses: DervexDev/file-version-bumper@v1
-        with:
-          path: ./wally.toml
-          version: ${{ steps.get_version.outputs.version }}
-
       - name: Setup rokit
         uses: CompeyDev/setup-rokit@v0.1.2
 
@@ -59,29 +53,16 @@ jobs:
       - name: Setup pesde
         uses: ewd3v/setup-pesde@v0.1.1
         with:
-          pesde_token: "${{ github.token }}"
+          pesde_token: "${{ secrets.PESDE_TOKEN || github.token }}"
 
       - name: Build
-        run: rojo build build.project.json --output Pack.rbxm
+        run: rojo build build.project.json --o Pack.rbxm
 
       - name: Read changelog
         id: read_changelog
         uses: mindsers/changelog-reader-action@v2
         with:
           version: ${{ steps.get_version.outputs.version }}
-
-      - name: Get previous release
-        id: previous_release
-        run: |
-          rev=$(git rev-list --tags --max-count=1 --skip=1 --no-walk)
-
-          # rev is empty if there is no previous release, so check for that
-          if [ -n ${rev} ]; then
-            tag=$(git describe --tag ${rev})
-
-            echo "rev=${rev}" >> "$GITHUB_OUTPUT"
-            echo "tag=${tag}" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Create release
         id: create_release
@@ -93,15 +74,8 @@ jobs:
             # Changelog
             ${{ steps.read_changelog.outputs.changes }}
 
-            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.previous_release.outputs.tag || github.ref_name }}...${{ github.ref_name }}
-          draft: false
+          generate_release_notes: true
           files: Pack.rbxm
-          prerelease: ${{ contains(github.ref_name, 'rc') }} # Checks for example v0.1.2-rc.1 etc, if you use other formats then you should change this
 
-      #   - name: Publish to pesde
-      #     run: pesde publish -y
-
-      - name: Publish to wally
-        run: |
-          wally login --token "${{ secrets.WALLY_TOKEN }}"
-          wally publish
+      - name: Publish to pesde
+        run: pesde publish -y

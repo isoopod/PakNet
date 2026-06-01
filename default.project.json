@@ -1,6 +1,15 @@
 {
   "name": "PakNet",
   "tree": {
-    "$path": "src"
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "PakNet": {
+        "$path": "src",
+        "roblox_packages": {
+          "$path": "roblox_packages"
+        }
+      }
+    }
   }
 }

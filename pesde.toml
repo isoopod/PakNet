@@ -4,10 +4,12 @@ description = "Schematized networking library."
 authors = ["isoopod"]
 repository = "https://github.com/isoopod/PakNet"
 license = "MIT"
-private = true # Will not be building for pesde right now because dependencies are different
+includes = ["pesde.toml", "LICENSE", "README.md", "src/**"]
 
 [target]
 environment = "roblox"
+lib = "src/init.luau"
+build_files = ["src"]
 
 [indices]
 default = "https://github.com/pesde-pkg/index"
@@ -28,6 +30,6 @@ pesde = "^0.7.0"
 lune = "^0.10.2"
 
 [dependencies]
-Pack = { wally = "isoopod/pack", version = "^0.10.0" }
+Pack = { name = "isoopod/pack", version = "^0.11.0" }
 Signal = { wally = "data-oriented-house/lemonsignal", version = "^1.11.0" }
 Promise = { wally = "howmanysmall/typed-promise", version = "^4.0.6" }

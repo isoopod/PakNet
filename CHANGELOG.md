@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added a release for Pesde. This replaces the Wally release.
+
+### Changed
+
+- Update to Pack v0.11.0
+
+### Removed
+
+- Removed release pipeline for Wally. Starting from this version, PakNet will no longer be published to Wally. Existing versions are still available.
+
 ## [0.7.1] - 2025-12-08
 
 ### Fixed

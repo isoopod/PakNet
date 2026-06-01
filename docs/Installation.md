@@ -7,11 +7,14 @@ sidebar_position: 2
 PakNet was made with the new luau type solver, so there will be type errors if you are not using it.  
 The new type solver can be enabled from beta features for studio and in luau-lsp settings for external editors.
 
-## Wally
+## Pesde
 
-Get the latest version of PakNet from [wally.run](https://wally.run/package/isoopod/paknet) and add it to your wally.toml
+Get the latest version of PakNet from [pesde.dev](https://pesde.dev/packages/isoopod/paknet) and add it to your pesde.toml.  
+You can do this from CLI with the following:
 
-You will need to use [wally-package-types](https://crates.io/crates/wally-package-types) to fix the types
+```bash
+pesde add isoopod/paknet -a PakNet
+```
 
 ## Stand-alone
 

@@ -1,9 +1,11 @@
 {
   "name": "PakNet",
   "tree": {
-    "$path": "roblox_packages",
     "PakNet": {
-      "$path": "src"
+      "$path": "src",
+      "roblox_packages": {
+        "$path": "roblox_packages"
+      }
     },
     "$className": "ModuleScript",
     "$properties": {

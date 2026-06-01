@@ -1,9 +1,8 @@
-
 -- Return a dummy version of PakNet in edit mode so tooling can depend on modules using PakNet
 
-local Pack = require(script.Parent.Parent.Pack)
-local Promise = require(script.Parent.Parent.Promise)
-local Signal = require(script.Parent.Parent.Signal)
+local Pack = require(script.Parent.roblox_packages.Pack)
+local Promise = require(script.Parent.roblox_packages.Promise)
+local Signal = require(script.Parent.roblox_packages.Signal)
 local types = require(script.Parent.types)
 
 local dummy = {}
@@ -18,7 +17,7 @@ function meta.InvokeAsync(self: any)
 
 			-- Handle cancellation
 			onCancel(function()
-				pcall(task.cancel, timeoutThread)
+				pcall(task.cancel, timeoutThread :: any)
 			end)
 
 			timeoutThread = task.delay(self._timeout :: any, function()
@@ -76,7 +75,7 @@ function dummy.Mount(_, _, remoteTable: types.RemoteTable)
 				return nil
 			end
 		end,
-	})
+	}) :: any
 
 	for name, settings in remoteTable do
 		remotes[name] = newDummyRemote(settings)

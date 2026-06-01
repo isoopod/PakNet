@@ -1,7 +1,7 @@
 --!native
 --!optimize 2
 
-local Pack = require(script.Parent.Parent.Parent.Pack)
+local Pack = require(script.Parent.Parent.roblox_packages.Pack)
 
 local Writer = Pack:GetWriter()
 
