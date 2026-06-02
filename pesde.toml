@@ -1,5 +1,5 @@
 name = "isoopod/paknet"
-version = "0.8.0"
+version = "0.8.1"
 description = "Schematized networking library."
 authors = ["isoopod"]
 repository = "https://github.com/isoopod/PakNet"
