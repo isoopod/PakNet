@@ -11,9 +11,9 @@ local RunService = game:GetService("RunService")
 -- Modules
 local Client = require(script.Client)
 local MountNamespace = require(script.MountNamespace)
-local Pack = require(script.roblox_packages.Pack)
+local Pack = require(script.Parent.roblox_packages.Pack)
 local Server = require(script.Server)
-local Signal = require(script.roblox_packages.Signal)
+local Signal = require(script.Parent.roblox_packages.Signal)
 
 local SALT = string.gsub(game.JobId, "-", ""):upper()
 if SALT == "" then SALT = "00000000000000000000000000000000" end -- For local testing, JobId on server is '' while on client it is a UUID of all 0's

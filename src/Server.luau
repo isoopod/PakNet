@@ -4,9 +4,9 @@
 local EncodingService = game:GetService("EncodingService")
 local Players = game:GetService("Players")
 -- Modules
-local Promise = require(script.Parent.roblox_packages.Promise)
+local Promise = require(script.Parent.Parent.roblox_packages.Promise)
 local Ratelimit = require(script.Parent.Ratelimit)
-local Signal = require(script.Parent.roblox_packages.Signal)
+local Signal = require(script.Parent.Parent.roblox_packages.Signal)
 local types = require(script.Parent.types)
 
 local Server = {}

@@ -1,8 +1,8 @@
 local RunService = game:GetService("RunService")
 
-local LemonSignal = require(script.Parent.roblox_packages.Signal)
-local Pack = require(script.Parent.roblox_packages.Pack)
-local Promise = require(script.Parent.roblox_packages.Promise)
+local LemonSignal = require(script.Parent.Parent.roblox_packages.Signal)
+local Pack = require(script.Parent.Parent.roblox_packages.Pack)
+local Promise = require(script.Parent.Parent.roblox_packages.Promise)
 
 export type Schema<T, U...> = Pack.Schema<T, U...>
 

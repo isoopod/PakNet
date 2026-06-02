@@ -2,14 +2,14 @@
   "name": "PakNet",
   "tree": {
     "PakNet": {
-      "$path": "src",
-      "roblox_packages": {
-        "$path": "roblox_packages"
-      }
+      "$path": "src"
+    },
+    "roblox_packages": {
+      "$path": "roblox_packages"
     },
     "$className": "ModuleScript",
     "$properties": {
-      "Source": "local REQUIRED_MODULE = require(script.paknet)\nexport type Schema<T, U...> = REQUIRED_MODULE.Schema<T, U...>\nexport type Signal = REQUIRED_MODULE.Signal \nreturn REQUIRED_MODULE"
+      "Source": "local REQUIRED_MODULE = require(script.PakNet)\nexport type Schema<T, U...> = REQUIRED_MODULE.Schema<T, U...>\nexport type Signal = REQUIRED_MODULE.Signal \nreturn REQUIRED_MODULE"
     }
   }
 }
