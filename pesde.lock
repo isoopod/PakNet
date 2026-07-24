@@ -142,10 +142,10 @@ pathfs = [{ name = "jiwonz/pathfs", version = "^0.6.0", index = "https://github.
 result = [{ name = "lukadev_0/result", version = "^1.2.1", index = "https://github.com/pesde-pkg/index" }, "peer"]
 unzip = [{ name = "0x5eal/unzip", version = "^0.2.0", index = "https://github.com/pesde-pkg/index", target = "luau" }, "standard"]
 
-[graph."wally#data-oriented-house/lemonsignal@1.11.0 roblox"]
-direct = ["Signal", { wally = "wally#data-oriented-house/lemonsignal", version = "^1.11.0", index = "default" }, "standard"]
+[graph."wally#data-oriented-house/lemonsignal@2.0.0 roblox"]
+direct = ["Signal", { wally = "wally#data-oriented-house/lemonsignal", version = "^2.0.0", index = "default" }, "standard"]
 
-[graph."wally#data-oriented-house/lemonsignal@1.11.0 roblox".pkg_ref]
+[graph."wally#data-oriented-house/lemonsignal@2.0.0 roblox".pkg_ref]
 ref_ty = "wally"
 index_url = "https://github.com/UpliftGames/wally-index"
 

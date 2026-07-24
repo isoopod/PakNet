@@ -118,8 +118,8 @@ export type Events = { f: RemoteFunction?, r: RemoteEvent?, u: UnreliableRemoteE
 export type Signal<T...> = {
 	RBXScriptConnection: RBXScriptConnection?,
 
-	Connect: <U...>(self: Signal<T...>, fn: (T...) -> (), U...) -> LemonSignal.Connection<U...>,
-	Once: <U...>(self: Signal<T...>, fn: (T...) -> (), U...) -> LemonSignal.Connection<U...>,
+	Connect: <U...>(self: Signal<T...>, fn: (T...) -> (), U...) -> LemonSignal.Connection,
+	Once: <U...>(self: Signal<T...>, fn: (T...) -> (), U...) -> LemonSignal.Connection,
 	Wait: (self: Signal<T...>) -> T...,
 	Fire: (self: Signal<T...>, T...) -> (),
 	DisconnectAll: (self: Signal<T...>) -> (),
