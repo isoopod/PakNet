@@ -2,7 +2,7 @@
 # It is not intended for manual editing.
 format = 2
 name = "isoopod/paknet"
-version = "0.7.1"
+version = "0.8.1"
 target = "roblox"
 
 [graph."0x5eal/unzip@0.2.0 luau".pkg_ref]
@@ -16,14 +16,14 @@ frktest = [{ name = "itsfrank/frktest", version = "^0.0.4", index = "https://git
 luau-lsp = [{ name = "pesde/luau_lsp", version = "=1.53.2", index = "https://github.com/pesde-pkg/index", target = "lune" }, "dev"]
 stylua = [{ name = "pesde/stylua", version = "=2.1.0", index = "https://github.com/pesde-pkg/index", target = "lune" }, "dev"]
 
-[graph."isoopod/pack@0.11.0 roblox"]
-direct = ["Pack", { name = "isoopod/pack", version = "^0.11.0", index = "default" }, "standard"]
+[graph."isoopod/pack@0.12.0 roblox"]
+direct = ["Pack", { name = "isoopod/pack", version = "^0.12.0", index = "default" }, "standard"]
 
-[graph."isoopod/pack@0.11.0 roblox".pkg_ref]
+[graph."isoopod/pack@0.12.0 roblox".pkg_ref]
 ref_ty = "pesde"
 index_url = "https://github.com/pesde-pkg/index"
 
-[graph."isoopod/pack@0.11.0 roblox".pkg_ref.dependencies]
+[graph."isoopod/pack@0.12.0 roblox".pkg_ref.dependencies]
 Jest = [{ wally = "wally#jsdotlua/jest", version = "^3.10.0", index = "https://github.com/UpliftGames/wally-index" }, "dev"]
 JestGlobals = [{ wally = "wally#jsdotlua/jest-globals", version = "^3.10.0", index = "https://github.com/UpliftGames/wally-index" }, "dev"]
 rojo = [{ name = "pesde/rojo", version = "^7.5.1", index = "https://github.com/pesde-pkg/index", target = "lune" }, "dev"]

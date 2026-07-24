@@ -30,6 +30,6 @@ pesde = "^0.7.0"
 lune = "^0.10.2"
 
 [dependencies]
-Pack = { name = "isoopod/pack", version = "^0.11.0" }
+Pack = { name = "isoopod/pack", version = "^0.12.0" }
 Signal = { wally = "data-oriented-house/lemonsignal", version = "^1.11.0" }
 Promise = { wally = "howmanysmall/typed-promise", version = "^4.0.6" }

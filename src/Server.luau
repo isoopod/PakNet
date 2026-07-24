@@ -13,7 +13,7 @@ local Server = {}
 local ServerClass = { metatable = { __index = Server } }
 
 type _Server<T, V, U..., W...> = types.Server<T, V, U..., W...> & {
-	OnEvent: any,
+	OnServerEvent: any,
 
 	_events: types.Events,
 	_params: types.Schema<T, U...>,
@@ -193,7 +193,7 @@ function Server.FireExceptUnreliable<T, V, U..., W...>(self: _Server<T, V, U...,
 end
 
 --[=[
-	@method Invoke
+	@method InvokeClient
 	@within Server
 	@yields
 	@param to Player
@@ -210,7 +210,7 @@ end
 	Many people will tell you never to invoke the client from the server in general, but there are valid use cases and its up to you if you want to use something or not. 
 	:::
 ]=]
-function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, v1: T, ...: U...): (V, W...)
+function Server.InvokeClient<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, v1: T, ...: U...): (V, W...)
 	assert(self._events.f, "[PAKNET]: To use 'Invoke' you must have 'f' in the remoteType.")
 
 	local s, packet: buffer, refs: { any }? = pcall(self._params.Write, self._params, v1, ...)
@@ -282,13 +282,13 @@ function Server.Invoke<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Pl
 end
 
 --[=[
-	@method InvokeAsync
+	@method InvokeClientAsync
 	@within Server
 	@param to Player
 	@param args ..any -- The arguments tuple specified by the params schema
 	@return Promise
 
-	Asynchronous variant of [Server.Invoke] that does not block the calling thread, and instead returns a Promise  
+	Asynchronous variant of [Server.InvokeClient] that does not block the calling thread, and instead returns a Promise  
 
 	:::warning
 	Without an timeout set, the promise can yield forever.
@@ -297,7 +297,7 @@ end
 	You may want to set timeout very high as opposed to removing it, as without it the promise will raise a warning after 15 seconds.
 	:::
 ]=]
-function Server.InvokeAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, v1: T, ...: U...): Promise.TypedPromise<V, W...>
+function Server.InvokeClientAsync<T, V, U..., W...>(self: _Server<T, V, U..., W...>, to: Player, v1: T, ...: U...): Promise.TypedPromise<V, W...>
 	assert(self._events.f, "[PAKNET]: To use 'InvokeAsync' you must have 'f' in the remoteType.")
 	assert(self._returns, "[PAKNET]: Remote function missing `returns` field.")
 
@@ -410,7 +410,7 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 		@within Server
 		A signal that fires when a Remote is fired from the client with FireServer or FireServerUnreliable (and their variants)
 	]=]
-	if self._events.r or self._events.u then self.OnEvent = Signal.new() :: any end
+	if self._events.r or self._events.u then self.OnServerEvent = Signal.new() :: any end
 
 	--[=[
 		@prop OnRateLimited Signal
@@ -482,14 +482,14 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 
 	if self._events.f then
 		self._events.f.OnServerInvoke = function(player: Player, buff, refs)
-			if self.OnInvoke and not self:_RateLimited(player) then
+			if self.OnServerInvoke and not self:_RateLimited(player) then
 				if self._compression then
 					local s
 					s, buff = pcall(EncodingService.DecompressBuffer, EncodingService, buff, self._compression.algorithm)
 					if not s then error(`[PAKNET]: Error decompressing packet with custom compression: {buff}`) end
 				end
 
-				local returns = { self.OnInvoke(player, parsePacket(player, buff, refs)) }
+				local returns = { self.OnServerInvoke(player, parsePacket(player, buff, refs)) }
 
 				assert(self._returns, "[PAKNET]: Remote function missing `returns` field.")
 				local s, packet: buffer, returnRefs: { any }? = pcall(self._returns.Write, self._returns, unpack(returns) :: any)
@@ -504,17 +504,17 @@ function ServerClass.new<T, V, U..., W...>(events: types.Events, settings: types
 	end
 	if self._events.r then
 		self._events.r.OnServerEvent:Connect(function(player, buff, refs)
-			if self.OnEvent._head and not self:_RateLimited(player) then
+			if self.OnServerEvent._head and not self:_RateLimited(player) then
 				local packet = { parsePacket(player, buff, refs) }
-				if self:_DoChecks(player, table.unpack(packet)) then self.OnEvent:Fire(player, table.unpack(packet)) end
+				if self:_DoChecks(player, table.unpack(packet)) then (self.OnServerEvent :: any):Fire(player, table.unpack(packet)) end
 			end
 		end)
 	end
 	if self._events.u then
 		self._events.u.OnServerEvent:Connect(function(player, buff, refs)
-			if self.OnEvent._head and not self:_RateLimited(player) then
+			if self.OnServerEvent._head and not self:_RateLimited(player) then
 				local packet = { parsePacket(player, buff, refs) }
-				if self:_DoChecks(player, table.unpack(packet)) then self.OnEvent:Fire(player, table.unpack(packet)) end
+				if self:_DoChecks(player, table.unpack(packet)) then (self.OnServerEvent :: any):Fire(player, table.unpack(packet)) end
 			end
 		end)
 	end

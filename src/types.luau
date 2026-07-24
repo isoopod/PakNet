@@ -129,11 +129,11 @@ export type Signal<T...> = {
 export type Server<T, V, U..., W...> = {
 	ClassName: "Server",
 
-	OnEvent: Signal<(Player, T, U...)>,
+	OnServerEvent: Signal<(Player, T, U...)>,
 	OnRateLimited: Signal<Player>,
 	OnParseError: Signal<Player, string>,
 	OnCheckFail: LemonSignal.Signal<Player, string>,
-	OnInvoke: ((player: Player, T, U...) -> (V, W...))?,
+	OnServerInvoke: ((player: Player, T, U...) -> (V, W...))?,
 
 	Fire: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (),
 	FireAll: (self: Server<T, V, U..., W...>, T, U...) -> (),
@@ -145,8 +145,8 @@ export type Server<T, V, U..., W...> = {
 	FireListUnreliable: (self: Server<T, V, U..., W...>, players: { Player }, T, U...) -> (),
 	FireExceptUnreliable: (self: Server<T, V, U..., W...>, except: { Player }, T, U...) -> (),
 
-	Invoke: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (V, W...),
-	InvokeAsync: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> Promise.TypedPromise<(V, W...)>,
+	InvokeClient: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> (V, W...),
+	InvokeClientAsync: (self: Server<T, V, U..., W...>, to: Player, T, U...) -> Promise.TypedPromise<(V, W...)>,
 
 	AddSanityCheck: (self: Server<T, V, U..., W...>, check: (player: Player, T, U...) -> boolean?) -> (),
 }

@@ -315,7 +315,7 @@ function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types
 					if not s then error(`[PAKNET]: Error decompressing packet with custom compression: {buff}`) end
 				end
 
-				self.OnClientEvent:Fire(self._params:Read(buff, refs))
+				(self.OnClientEvent :: any):Fire(self._params:Read(buff, refs))
 			end
 		end)
 	end
@@ -328,7 +328,7 @@ function ClientClass.new<T, V, U..., W...>(events: types.Events, settings: types
 					if not s then error(`[PAKNET]: Error decompressing packet with custom compression: {buff}`) end
 				end
 
-				self.OnClientEvent:Fire(self._params:Read(buff, refs))
+				(self.OnClientEvent :: any):Fire(self._params:Read(buff, refs))
 			end
 		end)
 	end
