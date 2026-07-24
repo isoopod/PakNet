@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed Server events and methods:
+  - `OnEvent` -> `OnServerEvent`
+  - `OnInvoke` -> `OnServerInvoke`
+  - `Invoke` -> `InvokeClient`
+  - `InvokeAsync` -> `InvokeClientAsync`
+- Update to Pack v0.12.0
+
 ## [0.8.1] - 2026-06-02
 
 ## [0.8.0] - 2026-06-01
