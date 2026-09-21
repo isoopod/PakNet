@@ -24,6 +24,6 @@ title = "Exploit resistant"
 description = "PakNet strengthens security by ensuring remotes adhere to defined schemas and by offering server-side events that flag network tampering. It also hinders tools like RemoteSpy by hashing remote names and using a binary format, deterring exploiters and protecting network integrity."
 
 [[navbar.items]]
-href = "https://wally.run/package/isoopod/paknet"
-label = "Wally"
+href = "https://pesde.dev/packages/isoopod/paknet"
+label = "Pesde"
 position = "right"
